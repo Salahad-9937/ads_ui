@@ -3,6 +3,20 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:async';
 
+/// Сервис для управления WebSocket-соединением с сервером дрона.
+///
+/// [_channel] - Канал WebSocket для связи с сервером.
+/// [_droneStatus] - Текущий статус дрона.
+/// [_currentImage] - Текущее изображение с камеры дрона.
+/// [_isConnected] - Флаг, указывающий, активно ли соединение.
+/// [_isReconnecting] - Флаг, указывающий, выполняется ли переподключение.
+/// [_autoReconnect] - Флаг, указывающий, включено ли автоматическое переподключение.
+/// [_explicitlyConnected] - Флаг, указывающий, было ли соединение инициировано явно.
+/// [_reconnectTimer] - Таймер для автоматического переподключения.
+/// [onStatusUpdate] - Callback для обновления статуса дрона.
+/// [onImageUpdate] - Callback для обновления изображения.
+/// [onConnectionUpdate] - Callback для обновления состояния соединения.
+/// [onAutoReconnectUpdate] - Callback для обновления состояния автопереподключения.
 class WebSocketService {
   WebSocketChannel? _channel;
   Map<String, dynamic> _droneStatus = {};
@@ -29,6 +43,7 @@ class WebSocketService {
   Uint8List? get currentImage => _currentImage;
   bool get autoReconnect => _autoReconnect;
 
+  /// Устанавливает соединение с сервером через WebSocket.
   void connectToServer() async {
     if (_isReconnecting || _isConnected) return;
     _isReconnecting = true;
@@ -65,6 +80,7 @@ class WebSocketService {
     }
   }
 
+  /// Разрывает соединение с сервером.
   void disconnect() {
     _reconnectTimer?.cancel();
     _channel?.sink.close();
@@ -78,6 +94,7 @@ class WebSocketService {
     onImageUpdate(null);
   }
 
+  /// Включает или отключает автоматическое переподключение.
   void toggleAutoReconnect() {
     _autoReconnect = !_autoReconnect;
     onAutoReconnectUpdate(_autoReconnect);
@@ -88,6 +105,7 @@ class WebSocketService {
     }
   }
 
+  /// Обрабатывает разрыв соединения и инициирует переподключение, если включено.
   void _handleDisconnect() {
     _isConnected = false;
     _droneStatus = {};
@@ -102,9 +120,10 @@ class WebSocketService {
     }
   }
 
+  /// Запускает таймер для периодических попыток переподключения.
   void _startReconnectTimer() {
     _reconnectTimer?.cancel();
-    _reconnectTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+    _reconnectTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
       if (!_isConnected &&
           !_isReconnecting &&
           _explicitlyConnected &&
@@ -117,6 +136,7 @@ class WebSocketService {
     });
   }
 
+  /// Освобождает ресурсы, закрывая соединение и отменяя таймер.
   void dispose() {
     _reconnectTimer?.cancel();
     _channel?.sink.close();

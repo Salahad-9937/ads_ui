@@ -7,6 +7,14 @@ import '../servises/websocket_service.dart';
 import 'panels/status_panel.dart';
 import 'panels/tasks_panel.dart';
 
+/// Главный экран приложения, отображающий интерфейс управления дроном.
+///
+/// [webSocketService] - Сервис для работы с WebSocket-соединением.
+/// [droneStatus] - Текущий статус дрона.
+/// [currentImage] - Текущее изображение с камеры дрона.
+/// [isConnected] - Флаг, указывающий, активно ли соединение с сервером.
+/// [isAutoReconnectEnabled] - Флаг, указывающий, включено ли автоматическое переподключение.
+/// [expandedView] - Идентификатор развернутого вида (например, 'camera1', 'camera2').
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -55,6 +63,9 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  /// Переключает развернутый вид для указанного представления.
+  ///
+  /// [view] - Идентификатор представления (например, 'camera1', 'camera2').
   void toggleView(String view) {
     setState(() {
       if (expandedView == view) {

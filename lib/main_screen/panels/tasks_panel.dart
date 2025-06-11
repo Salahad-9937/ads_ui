@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Панель для отображения списка текущих задач дрона.
 class TasksPanel extends StatelessWidget {
   const TasksPanel({super.key});
 

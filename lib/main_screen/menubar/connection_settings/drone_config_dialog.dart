@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'drone_config.dart';
 
+/// Диалоговое окно для добавления или редактирования конфигурации дрона.
+///
+/// [drone] - Конфигурация дрона для редактирования (опционально).
+/// [onSave] - Callback для сохранения конфигурации.
 class DroneConfigDialog extends StatefulWidget {
   final DroneConfig? drone;
   final Function(DroneConfig) onSave;
@@ -11,6 +15,13 @@ class DroneConfigDialog extends StatefulWidget {
   DroneConfigDialogState createState() => DroneConfigDialogState();
 }
 
+/// Состояние диалогового окна для управления конфигурацией дрона.
+///
+/// [_formKey] - Ключ формы для валидации.
+/// [_nameController] - Контроллер для поля имени дрона.
+/// [_ipController] - Контроллер для поля IP-адреса.
+/// [_portController] - Контроллер для поля порта.
+/// [_isVirtual] - Флаг, указывающий, является ли дрон виртуальным.
 class DroneConfigDialogState extends State<DroneConfigDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -37,6 +48,7 @@ class DroneConfigDialogState extends State<DroneConfigDialog> {
     super.dispose();
   }
 
+  /// Сохраняет конфигурацию дрона и закрывает диалоговое окно.
   void _saveDrone() {
     if (_formKey.currentState!.validate()) {
       final config = DroneConfig(

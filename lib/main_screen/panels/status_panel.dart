@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+/// Панель для отображения текущего статуса дрона.
+///
+/// [droneStatus] - Карта с данными статуса дрона.
 class StatusPanel extends StatelessWidget {
   final Map<String, dynamic> droneStatus;
 
@@ -53,6 +56,11 @@ class StatusPanel extends StatelessWidget {
   }
 }
 
+/// Элемент списка для отображения отдельного параметра статуса дрона.
+///
+/// [label] - Название параметра.
+/// [value] - Значение параметра.
+/// [icon] - Иконка для отображения рядом с параметром.
 class StatusItem extends StatelessWidget {
   final String label;
   final String value;

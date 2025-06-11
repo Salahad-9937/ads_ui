@@ -2,6 +2,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'drone_config.dart';
 
+/// Хранилище для управления конфигурациями дронов.
+///
+/// [_key] - Ключ для хранения данных в SharedPreferences.
+/// [_defaultDrone] - Конфигурация дрона по умолчанию.
 class DroneConfigStorage {
   static const String _key = 'droneConfigs';
   static final DroneConfig _defaultDrone = DroneConfig(
@@ -11,6 +15,7 @@ class DroneConfigStorage {
     isVirtual: true,
   );
 
+  /// Загружает список конфигураций дронов из хранилища.
   Future<List<DroneConfig>> loadDrones() async {
     final prefs = await SharedPreferences.getInstance();
     final droneList = prefs.getString(_key);
@@ -31,6 +36,9 @@ class DroneConfigStorage {
     return drones;
   }
 
+  /// Сохраняет список конфигураций дронов в хранилище.
+  ///
+  /// [drones] - Список конфигураций дронов для сохранения.
   Future<void> saveDrones(List<DroneConfig> drones) async {
     final prefs = await SharedPreferences.getInstance();
     // Ensure default drone is included

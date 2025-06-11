@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+/// Контейнер для боковой панели с анимацией открытия и закрытия.
+///
+/// [isLeftPanel] - Флаг, указывающий, является ли панель левой.
+/// [child] - Виджет, отображаемый внутри панели.
 class PanelContainer extends StatefulWidget {
   final bool isLeftPanel;
   final Widget child;
@@ -14,6 +18,7 @@ class PanelContainer extends StatefulWidget {
   PanelContainerState createState() => PanelContainerState();
 }
 
+/// Состояние контейнера панели, управляющее анимацией открытия и закрытия.
 class PanelContainerState extends State<PanelContainer>
     with SingleTickerProviderStateMixin {
   bool isPanelOpen = false;
@@ -45,6 +50,7 @@ class PanelContainerState extends State<PanelContainer>
     super.dispose();
   }
 
+  /// Переключает состояние панели между открытым и закрытым.
   void _togglePanel() {
     setState(() {
       isPanelOpen = !isPanelOpen;

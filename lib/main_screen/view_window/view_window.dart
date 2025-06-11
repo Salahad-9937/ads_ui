@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:typed_data';
 
+/// Основное окно приложения, отображающее виды с камер, LiDAR или карты.
+///
+/// [currentImage] - Текущее изображение с камеры дрона.
+/// [expandedView] - Идентификатор развернутого вида (например, 'camera1', 'camera2').
+/// [toggleView] - Функция для переключения развернутого вида.
+/// [constraints] - Ограничения размеров для компоновки.
 class MainWindow extends StatelessWidget {
   final Uint8List? currentImage;
   final String? expandedView;
@@ -17,7 +23,7 @@ class MainWindow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const double headerHeight = 40; // Высота заголовка в ViewContainer
+    const double headerHeight = 40;
     if (expandedView == null) {
       return Column(
         children: [
@@ -95,6 +101,12 @@ class MainWindow extends StatelessWidget {
   }
 }
 
+/// Контейнер для отображения отдельного вида (камера, LiDAR, карта).
+///
+/// [title] - Заголовок контейнера.
+/// [child] - Содержимое контейнера.
+/// [onTap] - Callback для обработки нажатий.
+/// [height] - Высота контейнера.
 class ViewContainer extends StatelessWidget {
   final String title;
   final Widget child;

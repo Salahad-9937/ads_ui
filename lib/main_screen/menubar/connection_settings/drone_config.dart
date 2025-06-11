@@ -1,3 +1,9 @@
+/// Конфигурация дрона, содержащая параметры подключения.
+///
+/// [name] - Название дрона.
+/// [ipAddress] - IP-адрес для подключения к дрону.
+/// [port] - Порт для подключения к дрону.
+/// [isVirtual] - Флаг, указывающий, является ли дрон виртуальным.
 class DroneConfig {
   final String name;
   final String ipAddress;
@@ -11,6 +17,7 @@ class DroneConfig {
     required this.isVirtual,
   });
 
+  /// Преобразует конфигурацию дрона в JSON-формат.
   Map<String, dynamic> toJson() => {
     'name': name,
     'ipAddress': ipAddress,
@@ -18,6 +25,9 @@ class DroneConfig {
     'isVirtual': isVirtual,
   };
 
+  /// Создает конфигурацию дрона из JSON-данных.
+  ///
+  /// [json] - JSON-объект с данными конфигурации.
   factory DroneConfig.fromJson(Map<String, dynamic> json) => DroneConfig(
     name: json['name'],
     ipAddress: json['ipAddress'],

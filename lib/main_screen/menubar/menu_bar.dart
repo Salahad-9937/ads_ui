@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'connection_settings/connection_settings_dialog.dart';
 
+/// Меню приложения для управления подключением и настройками дрона.
+///
+/// [isConnected] - Флаг, указывающий, активно ли соединение с дроном.
+/// [isAutoReconnectEnabled] - Флаг, указывающий, включено ли автоматическое переподключение.
+/// [onConnect] - Callback для подключения к серверу.
+/// [onDisconnect] - Callback для отключения от сервера.
+/// [onToggleReconnect] - Callback для переключения автоматического переподключения.
 class DroneMenuBar extends StatelessWidget {
   final bool isConnected;
   final bool isAutoReconnectEnabled;

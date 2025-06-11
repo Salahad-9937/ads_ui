@@ -3,6 +3,10 @@ import 'drone_config.dart';
 import 'drone_config_storage.dart';
 import 'drone_config_dialog.dart';
 
+/// Диалоговое окно для управления списком конфигураций дронов.
+///
+/// [drones] - Список конфигураций дронов.
+/// [_storage] - Хранилище для сохранения и загрузки конфигураций дронов.
 class ConnectionSettingsDialog extends StatefulWidget {
   const ConnectionSettingsDialog({super.key});
 
@@ -11,6 +15,7 @@ class ConnectionSettingsDialog extends StatefulWidget {
       ConnectionSettingsDialogState();
 }
 
+/// Состояние диалогового окна для управления конфигурациями дронов.
 class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
   List<DroneConfig> drones = [];
   final DroneConfigStorage _storage = DroneConfigStorage();
@@ -21,6 +26,7 @@ class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
     _loadDrones();
   }
 
+  /// Загружает список конфигураций дронов из хранилища.
   Future<void> _loadDrones() async {
     final loadedDrones = await _storage.loadDrones();
     setState(() {
@@ -28,6 +34,9 @@ class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
     });
   }
 
+  /// Удаляет конфигурацию дрона по указанному индексу.
+  ///
+  /// [index] - Индекс удаляемой конфигурации в списке.
   void _removeDrone(int index) {
     setState(() {
       drones.removeAt(index);
@@ -35,6 +44,10 @@ class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
     _storage.saveDrones(drones);
   }
 
+  /// Отображает диалоговое окно для добавления или редактирования конфигурации дрона.
+  ///
+  /// [drone] - Конфигурация дрона для редактирования (опционально).
+  /// [index] - Индекс редактируемой конфигурации в списке (опционально).
   void _showDroneDialog({DroneConfig? drone, int? index}) {
     showDialog(
       context: context,
@@ -55,6 +68,9 @@ class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
     );
   }
 
+  /// Проверяет, является ли конфигурация дрона конфигурацией по умолчанию.
+  ///
+  /// [drone] - Конфигурация дрона для проверки.
   bool _isDefaultDrone(DroneConfig drone) {
     return drone.name == 'Default Drone' && drone.ipAddress == 'localhost';
   }
@@ -75,7 +91,7 @@ class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
         ],
       ),
       content: SizedBox(
-        width: screenWidth * 2 / 3, // Set width to two-thirds of screen width
+        width: screenWidth * 2 / 3,
         height: 300,
         child: Column(
           mainAxisSize: MainAxisSize.min,
