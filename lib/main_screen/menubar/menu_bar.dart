@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'connection_settings_dialog.dart';
 
 class DroneMenuBar extends StatelessWidget {
   final bool isConnected;
@@ -52,6 +53,15 @@ class DroneMenuBar extends StatelessWidget {
               MenuItemButton(
                 onPressed: () {},
                 child: const Text('Диагностика'),
+              ),
+              MenuItemButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const ConnectionSettingsDialog(),
+                  );
+                },
+                child: const Text('Настройки подключения'),
               ),
             ],
             child: const Text('Инструменты'),
