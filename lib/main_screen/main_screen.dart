@@ -18,6 +18,7 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   Map<String, dynamic> droneStatus = {};
   Uint8List? currentImage;
   bool isConnected = false;
+  bool isAutoReconnectEnabled = false;
   String? expandedView;
   bool isStatusPanelOpen = false;
   bool isTasksPanelOpen = false;
@@ -49,8 +50,12 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           isConnected = connected;
         });
       },
+      onAutoReconnectUpdate: (enabled) {
+        setState(() {
+          isAutoReconnectEnabled = enabled;
+        });
+      },
     );
-    webSocketService.connectToServer();
 
     _statusPanelController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -139,7 +144,13 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(50),
-        child: DroneMenuBar(isConnected: isConnected),
+        child: DroneMenuBar(
+          isConnected: isConnected,
+          isAutoReconnectEnabled: isAutoReconnectEnabled,
+          onConnect: webSocketService.connectToServer,
+          onDisconnect: webSocketService.disconnect,
+          onToggleReconnect: webSocketService.toggleAutoReconnect,
+        ),
       ),
       body: Row(
         children: [
