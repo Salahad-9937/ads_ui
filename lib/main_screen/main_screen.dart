@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'menu_bar.dart';
 import 'panels/panel_container.dart';
 import 'main_window.dart';
-import 'websocket_service.dart';
+import '../servises/websocket_service.dart';
 import 'panels/status_panel.dart';
 import 'panels/tasks_panel.dart';
 
