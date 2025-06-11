@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'dart:typed_data';
 import 'menu_bar.dart';
-import 'panels/status_panel_container.dart';
-import 'panels/tasks_panel_container.dart';
+import 'panels/panel_container.dart';
 import 'main_window.dart';
 import 'websocket_service.dart';
+import 'panels/status_panel.dart';
+import 'panels/tasks_panel.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -79,7 +80,10 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       ),
       body: Row(
         children: [
-          StatusPanelContainer(droneStatus: droneStatus),
+          PanelContainer(
+            isLeftPanel: true,
+            child: StatusPanel(droneStatus: droneStatus),
+          ),
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -92,7 +96,7 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
               },
             ),
           ),
-          TasksPanelContainer(),
+          PanelContainer(isLeftPanel: false, child: const TasksPanel()),
         ],
       ),
     );
