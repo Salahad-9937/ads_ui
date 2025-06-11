@@ -55,8 +55,13 @@ class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
     );
   }
 
+  bool _isDefaultDrone(DroneConfig drone) {
+    return drone.name == 'Default Drone' && drone.ipAddress == 'localhost';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
     return AlertDialog(
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -70,7 +75,7 @@ class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
         ],
       ),
       content: SizedBox(
-        width: 400,
+        width: screenWidth * 2 / 3, // Set width to two-thirds of screen width
         height: 300,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -84,6 +89,7 @@ class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
                 itemCount: drones.length,
                 itemBuilder: (context, index) {
                   final drone = drones[index];
+                  final isDefault = _isDefaultDrone(drone);
                   return ListTile(
                     title: Text(
                       '${drone.name} (${drone.ipAddress}:${drone.port}, ${drone.isVirtual ? 'Виртуальный' : 'Реальный'})',
@@ -94,14 +100,22 @@ class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
                         IconButton(
                           icon: const Icon(Icons.edit),
                           onPressed:
-                              () =>
-                                  _showDroneDialog(drone: drone, index: index),
-                          tooltip: 'Редактировать',
+                              isDefault
+                                  ? null
+                                  : () => _showDroneDialog(
+                                    drone: drone,
+                                    index: index,
+                                  ),
+                          tooltip:
+                              isDefault
+                                  ? 'Нельзя редактировать'
+                                  : 'Редактировать',
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete),
-                          onPressed: () => _removeDrone(index),
-                          tooltip: 'Удалить',
+                          onPressed:
+                              isDefault ? null : () => _removeDrone(index),
+                          tooltip: isDefault ? 'Нельзя удалить' : 'Удалить',
                         ),
                       ],
                     ),

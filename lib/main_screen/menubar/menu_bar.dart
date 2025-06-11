@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'connection_settings_dialog.dart';
+import 'connection_settings/connection_settings_dialog.dart';
 
 class DroneMenuBar extends StatelessWidget {
   final bool isConnected;

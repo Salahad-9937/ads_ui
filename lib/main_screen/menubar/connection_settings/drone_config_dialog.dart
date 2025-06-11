@@ -113,7 +113,7 @@ class DroneConfigDialogState extends State<DroneConfigDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Отмена'),
         ),
-        ElevatedButton(onPressed: _saveDrone, child: Text('Сохранить')),
+        ElevatedButton(onPressed: _saveDrone, child: const Text('Сохранить')),
       ],
     );
   }
