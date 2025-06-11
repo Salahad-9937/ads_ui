@@ -33,10 +33,10 @@ class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
   @override
-  _MainScreenState createState() => _MainScreenState();
+  MainScreenState createState() => MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
+class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   WebSocketChannel? channel;
   Map<String, dynamic> droneStatus = {};
   Uint8List? currentImage;
@@ -216,7 +216,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           AnimatedBuilder(
             animation: _statusWidthAnimation,
             builder: (context, child) {
-              return Container(
+              return SizedBox(
                 width: _statusWidthAnimation.value,
                 child: ClipRect(
                   child: Row(
@@ -278,7 +278,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           AnimatedBuilder(
             animation: _tasksWidthAnimation,
             builder: (context, child) {
-              return Container(
+              return SizedBox(
                 width: _tasksWidthAnimation.value,
                 child: ClipRect(
                   child: Row(
