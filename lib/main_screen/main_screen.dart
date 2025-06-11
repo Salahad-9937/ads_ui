@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:typed_data';
-import 'menu_bar.dart';
+import 'menubar/menu_bar.dart';
 import 'panels/panel_container.dart';
-import 'main_window.dart';
+import 'view_window/view_window.dart';
 import '../servises/websocket_service.dart';
 import 'panels/status_panel.dart';
 import 'panels/tasks_panel.dart';
