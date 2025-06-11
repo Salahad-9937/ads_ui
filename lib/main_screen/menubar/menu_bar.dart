@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class DroneMenuBar extends StatelessWidget {
   final bool isConnected;
@@ -54,6 +55,13 @@ class DroneMenuBar extends StatelessWidget {
               ),
             ],
             child: const Text('Инструменты'),
+          ),
+          MenuItemButton(
+            onPressed: () {
+              SystemNavigator.pop();
+            },
+            leadingIcon: const Icon(Icons.exit_to_app, size: 16),
+            child: const Text('Выход'),
           ),
         ],
       ),
