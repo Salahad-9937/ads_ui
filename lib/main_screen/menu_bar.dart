@@ -47,16 +47,6 @@ class DroneMenuBar extends StatelessWidget {
           ),
           SubmenuButton(
             menuChildren: [
-              MenuItemButton(
-                onPressed: () {},
-                child: const Text('Полный экран'),
-              ),
-              MenuItemButton(onPressed: () {}, child: const Text('Масштаб')),
-            ],
-            child: const Text('Вид'),
-          ),
-          SubmenuButton(
-            menuChildren: [
               MenuItemButton(onPressed: () {}, child: const Text('Калибровка')),
               MenuItemButton(
                 onPressed: () {},
