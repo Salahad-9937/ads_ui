@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
-import 'dart:convert';
 import 'dart:typed_data';
-import 'dart:async';
 import 'menu_bar.dart';
 import 'tasks_panel.dart';
 import 'status_panel.dart';
 import 'main_window.dart';
+import 'websocket_service.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -16,15 +14,13 @@ class MainScreen extends StatefulWidget {
 }
 
 class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
-  WebSocketChannel? channel;
+  late WebSocketService webSocketService;
   Map<String, dynamic> droneStatus = {};
   Uint8List? currentImage;
   bool isConnected = false;
   String? expandedView;
   bool isStatusPanelOpen = false;
   bool isTasksPanelOpen = false;
-  Timer? _reconnectTimer;
-  bool _isReconnecting = false;
   late AnimationController _statusPanelController;
   late AnimationController _tasksPanelController;
   late Animation<Offset> _statusPanelAnimation;
@@ -37,7 +33,25 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    connectToServer();
+    webSocketService = WebSocketService(
+      onStatusUpdate: (status) {
+        setState(() {
+          droneStatus = status;
+        });
+      },
+      onImageUpdate: (image) {
+        setState(() {
+          currentImage = image;
+        });
+      },
+      onConnectionUpdate: (connected) {
+        setState(() {
+          isConnected = connected;
+        });
+      },
+    );
+    webSocketService.connectToServer();
+
     _statusPanelController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -74,71 +88,9 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     );
   }
 
-  void connectToServer() async {
-    if (_isReconnecting) return;
-    _isReconnecting = true;
-
-    try {
-      channel = WebSocketChannel.connect(Uri.parse('ws://localhost:8765'));
-      setState(() {
-        isConnected = true;
-      });
-
-      channel!.stream.listen(
-        (data) {
-          final message = json.decode(data);
-          if (message['type'] == 'status') {
-            setState(() {
-              droneStatus = message['data'];
-            });
-          } else if (message['type'] == 'image') {
-            setState(() {
-              currentImage = base64Decode(message['data']);
-            });
-          }
-        },
-        onError: (error) {
-          _handleDisconnect();
-        },
-        onDone: () {
-          _handleDisconnect();
-        },
-        cancelOnError: true,
-      );
-    } catch (e) {
-      _handleDisconnect();
-    } finally {
-      _isReconnecting = false;
-    }
-  }
-
-  void _handleDisconnect() {
-    setState(() {
-      isConnected = false;
-      droneStatus = {};
-      currentImage = null;
-    });
-    channel?.sink.close();
-    channel = null;
-    _startReconnectTimer();
-  }
-
-  void _startReconnectTimer() {
-    _reconnectTimer?.cancel();
-    _reconnectTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      if (!isConnected && !_isReconnecting) {
-        connectToServer();
-      }
-      if (isConnected) {
-        timer.cancel();
-      }
-    });
-  }
-
   @override
   void dispose() {
-    _reconnectTimer?.cancel();
-    channel?.sink.close();
+    webSocketService.dispose();
     _statusPanelController.dispose();
     _tasksPanelController.dispose();
     _statusWidthController.dispose();
