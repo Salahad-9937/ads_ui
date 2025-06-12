@@ -5,9 +5,11 @@ import 'drone_config.dart';
 /// Хранилище для управления конфигурациями дронов.
 ///
 /// [_key] - Ключ для хранения данных в SharedPreferences.
+/// [_selectedDroneKey] - Ключ для хранения индекса активного дрона.
 /// [_defaultDrone] - Конфигурация дрона по умолчанию.
 class DroneConfigStorage {
   static const String _key = 'droneConfigs';
+  static const String _selectedDroneKey = 'selectedDroneIndex';
   static final DroneConfig _defaultDrone = DroneConfig(
     name: 'Default Drone',
     ipAddress: 'localhost',
@@ -58,5 +60,23 @@ class DroneConfigStorage {
           ...filteredDrones,
         ].map((drone) => drone.toJson()).toList();
     await prefs.setString(_key, json.encode(jsonList));
+  }
+
+  /// Сохраняет индекс активного дрона в хранилище.
+  ///
+  /// [index] - Индекс активного дрона или null, если дрон не выбран.
+  Future<void> saveSelectedDroneIndex(int? index) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (index != null) {
+      await prefs.setInt(_selectedDroneKey, index);
+    } else {
+      await prefs.remove(_selectedDroneKey);
+    }
+  }
+
+  /// Загружает индекс активного дрона из хранилища.
+  Future<int?> loadSelectedDroneIndex() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_selectedDroneKey);
   }
 }
