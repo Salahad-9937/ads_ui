@@ -13,6 +13,8 @@ class DroneConfigStorage {
     ipAddress: 'localhost',
     port: 8765,
     isVirtual: true,
+    sshUsername: '',
+    sshPassword: '',
   );
 
   /// Загружает список конфигураций дронов из хранилища.

@@ -21,12 +21,16 @@ class DroneConfigDialog extends StatefulWidget {
 /// [_nameController] - Контроллер для поля имени дрона.
 /// [_ipController] - Контроллер для поля IP-адреса.
 /// [_portController] - Контроллер для поля порта.
+/// [_sshUsernameController] - Контроллер для поля имени пользователя SSH.
+/// [_sshPasswordController] - Контроллер для поля пароля SSH.
 /// [_isVirtual] - Флаг, указывающий, является ли дрон виртуальным.
 class DroneConfigDialogState extends State<DroneConfigDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _ipController = TextEditingController();
   final _portController = TextEditingController();
+  final _sshUsernameController = TextEditingController();
+  final _sshPasswordController = TextEditingController();
   bool _isVirtual = false;
 
   @override
@@ -37,6 +41,8 @@ class DroneConfigDialogState extends State<DroneConfigDialog> {
       _ipController.text = widget.drone!.ipAddress;
       _portController.text = widget.drone!.port.toString();
       _isVirtual = widget.drone!.isVirtual;
+      _sshUsernameController.text = widget.drone!.sshUsername;
+      _sshPasswordController.text = widget.drone!.sshPassword;
     }
   }
 
@@ -45,6 +51,8 @@ class DroneConfigDialogState extends State<DroneConfigDialog> {
     _nameController.dispose();
     _ipController.dispose();
     _portController.dispose();
+    _sshUsernameController.dispose();
+    _sshPasswordController.dispose();
     super.dispose();
   }
 
@@ -56,6 +64,8 @@ class DroneConfigDialogState extends State<DroneConfigDialog> {
         ipAddress: _ipController.text,
         port: int.tryParse(_portController.text) ?? 8765,
         isVirtual: _isVirtual,
+        sshUsername: _sshUsernameController.text,
+        sshPassword: _sshPasswordController.text,
       );
       widget.onSave(config);
       Navigator.of(context).pop();
@@ -107,6 +117,22 @@ class DroneConfigDialogState extends State<DroneConfigDialog> {
                 }
                 return null;
               },
+            ),
+            TextFormField(
+              controller: _sshUsernameController,
+              decoration: const InputDecoration(
+                labelText: 'Имя пользователя SSH',
+              ),
+              validator:
+                  (value) =>
+                      value!.isEmpty ? 'Введите имя пользователя SSH' : null,
+            ),
+            TextFormField(
+              controller: _sshPasswordController,
+              decoration: const InputDecoration(labelText: 'Пароль SSH'),
+              obscureText: true,
+              validator:
+                  (value) => value!.isEmpty ? 'Введите пароль SSH' : null,
             ),
             CheckboxListTile(
               title: const Text('Виртуальный дрон'),
