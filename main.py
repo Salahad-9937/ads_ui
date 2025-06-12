@@ -6,6 +6,7 @@ import random
 import os
 import time
 from pathlib import Path
+import argparse
 
 class DroneServer:
     def __init__(self, images_folder="images"):
@@ -67,14 +68,22 @@ class DroneServer:
             print(f"Error: {e}")
 
 async def main():
-    # Создаем папку для изображений если её нет
+    # Парсинг аргументов командной строки
+    parser = argparse.ArgumentParser(description="Drone WebSocket Server")
+    parser.add_argument('--host', default='localhost', help='Host IP address to bind (default: localhost)')
+    parser.add_argument('--port', type=int, default=8765, help='Port to bind (default: 8765)')
+    args = parser.parse_args()
+
+    # Создаем папку для изображений, если её нет
     images_folder = Path("images")
     images_folder.mkdir(exist_ok=True)
     
     server = DroneServer()
     
-    print("Starting drone server on ws://localhost:8765")
-    async with websockets.serve(server.handle_client, "localhost", 8765):
+    # Используем 0.0.0.0 для внешнего доступа, если host не localhost
+    bind_host = '0.0.0.0' if args.host != 'localhost' else 'localhost'
+    print(f"Starting drone server on ws://{args.host}:{args.port} (binding to {bind_host}:{args.port})")
+    async with websockets.serve(server.handle_client, bind_host, args.port):
         await asyncio.Future()  # Run forever
 
 if __name__ == "__main__":
