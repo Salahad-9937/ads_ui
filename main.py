@@ -16,8 +16,8 @@ class DroneServer:
         
     def get_drone_status(self):
         return {
-            # "battery": random.randint(20, 100),
-            # "altitude": round(random.uniform(0, 50), 2),
+            "battery": random.randint(20, 100),
+            "altitude": round(random.uniform(0, 50), 2),
             "speed": round(random.uniform(0, 15), 2),
             "temperature": random.randint(-10, 40),
             "gps_lat": round(random.uniform(55.7, 55.8), 6),
