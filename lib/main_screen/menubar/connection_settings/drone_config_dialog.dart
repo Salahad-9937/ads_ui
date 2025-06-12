@@ -123,16 +123,11 @@ class DroneConfigDialogState extends State<DroneConfigDialog> {
               decoration: const InputDecoration(
                 labelText: 'Имя пользователя SSH',
               ),
-              validator:
-                  (value) =>
-                      value!.isEmpty ? 'Введите имя пользователя SSH' : null,
             ),
             TextFormField(
               controller: _sshPasswordController,
               decoration: const InputDecoration(labelText: 'Пароль SSH'),
               obscureText: true,
-              validator:
-                  (value) => value!.isEmpty ? 'Введите пароль SSH' : null,
             ),
             CheckboxListTile(
               title: const Text('Виртуальный дрон'),
