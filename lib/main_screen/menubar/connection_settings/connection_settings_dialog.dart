@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'drone_config.dart';
-import 'drone_config_storage.dart';
 import 'drone_config_dialog.dart';
+import 'drone_manager.dart';
+import 'drone_list_widget.dart';
 
 /// Диалоговое окно для управления списком конфигураций дронов.
 ///
-/// [drones] - Список конфигураций дронов.
-/// [_storage] - Хранилище для сохранения и загрузки конфигураций дронов.
 /// [onSelectDrone] - Callback для возврата выбранного дрона.
 class ConnectionSettingsDialog extends StatefulWidget {
   final Function(DroneConfig?)? onSelectDrone;
@@ -20,9 +19,7 @@ class ConnectionSettingsDialog extends StatefulWidget {
 
 /// Состояние диалогового окна для управления конфигурациями дронов.
 class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
-  List<DroneConfig> drones = [];
-  final DroneConfigStorage _storage = DroneConfigStorage();
-  int? _selectedDroneIndex; // Индекс активного дрона
+  final DroneManager _droneManager = DroneManager();
 
   @override
   void initState() {
@@ -30,55 +27,28 @@ class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
     _loadDrones();
   }
 
-  /// Загружает список конфигураций дронов и индекс активного дрона из хранилища.
+  /// Загружает список конфигураций дронов и устанавливает активный дрон.
   Future<void> _loadDrones() async {
-    final loadedDrones = await _storage.loadDrones();
-    final selectedIndex = await _storage.loadSelectedDroneIndex();
+    await _droneManager.loadDrones();
     setState(() {
-      drones = loadedDrones;
-      // Устанавливаем сохраненный индекс или 0, если список не пустой
-      if (drones.isNotEmpty) {
-        _selectedDroneIndex =
-            selectedIndex != null && selectedIndex < drones.length
-                ? selectedIndex
-                : 0;
-        widget.onSelectDrone?.call(drones[_selectedDroneIndex!]);
-      } else {
-        _selectedDroneIndex = null;
-        widget.onSelectDrone?.call(null);
-      }
+      widget.onSelectDrone?.call(_droneManager.selectedDrone);
     });
   }
 
-  /// Удаляет конфигурацию дрона по указанному индексу.
-  ///
-  /// [index] - Индекс удаляемой конфигурации в списке.
-  void _removeDrone(int index) {
+  /// Обработчик выбора дрона.
+  Future<void> _onSelectDrone(int index) async {
+    await _droneManager.selectDrone(index);
     setState(() {
-      drones.removeAt(index);
-      // Если удален активный дрон, сбрасываем выбор или выбираем первый
-      if (_selectedDroneIndex == index) {
-        _selectedDroneIndex = drones.isNotEmpty ? 0 : null;
-        widget.onSelectDrone?.call(
-          _selectedDroneIndex != null ? drones[_selectedDroneIndex!] : null,
-        );
-      } else if (_selectedDroneIndex != null && _selectedDroneIndex! > index) {
-        _selectedDroneIndex = _selectedDroneIndex! - 1;
-      }
+      widget.onSelectDrone?.call(_droneManager.selectedDrone);
     });
-    _storage.saveDrones(drones);
-    _storage.saveSelectedDroneIndex(_selectedDroneIndex);
   }
 
-  /// Выбирает дрон как активный.
-  ///
-  /// [index] - Индекс выбираемого дрона.
-  void _selectDrone(int index) {
+  /// Обработчик удаления дрона.
+  Future<void> _onRemoveDrone(int index) async {
+    await _droneManager.removeDrone(index);
     setState(() {
-      _selectedDroneIndex = index;
+      widget.onSelectDrone?.call(_droneManager.selectedDrone);
     });
-    _storage.saveSelectedDroneIndex(_selectedDroneIndex);
-    widget.onSelectDrone?.call(drones[index]);
   }
 
   /// Отображает диалоговое окно для добавления или редактирования конфигурации дрона.
@@ -91,36 +61,24 @@ class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
       builder:
           (context) => DroneConfigDialog(
             drone: drone,
-            onSave: (config) {
+            onSave: (config) async {
+              if (index != null) {
+                await _droneManager.updateDrone(index, config);
+              } else {
+                await _droneManager.addDrone(config);
+              }
               setState(() {
-                if (index != null) {
-                  drones[index] = config;
-                } else {
-                  drones.add(config);
-                  // Если добавлен новый дрон и нет активного, выбираем его
-                  if (_selectedDroneIndex == null) {
-                    _selectedDroneIndex = drones.length - 1;
-                    widget.onSelectDrone?.call(drones[_selectedDroneIndex!]);
-                    _storage.saveSelectedDroneIndex(_selectedDroneIndex);
-                  }
-                }
+                widget.onSelectDrone?.call(_droneManager.selectedDrone);
               });
-              _storage.saveDrones(drones);
             },
           ),
     );
   }
 
-  /// Проверяет, является ли конфигурация дрона конфигурацией по умолчанию.
-  ///
-  /// [drone] - Конфигурация дрона для проверки.
-  bool _isDefaultDrone(DroneConfig drone) {
-    return drone.name == 'Default Drone' && drone.ipAddress == 'localhost';
-  }
-
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
+
     return AlertDialog(
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -136,67 +94,17 @@ class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
       content: SizedBox(
         width: screenWidth * 2 / 3,
         height: 300,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Список дронов:',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: drones.length,
-                itemBuilder: (context, index) {
-                  final drone = drones[index];
-                  final isDefault = _isDefaultDrone(drone);
-                  final isSelected = _selectedDroneIndex == index;
-                  return ListTile(
-                    leading: IconButton(
-                      icon: Icon(
-                        isSelected ? Icons.check_circle : Icons.circle_outlined,
-                        color: isSelected ? Colors.green : Colors.grey,
-                      ),
-                      onPressed: () => _selectDrone(index),
-                      tooltip: 'Выбрать дрон',
-                    ),
-                    title: Text(
-                      '${drone.name} (${drone.ipAddress}:${drone.port}, ${drone.isVirtual ? 'Виртуальный' : 'Реальный'})',
-                      style: TextStyle(
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.normal,
-                        color: isSelected ? Colors.blue : null,
-                      ),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed:
-                              isDefault
-                                  ? null
-                                  : () => _showDroneDialog(
-                                    drone: drone,
-                                    index: index,
-                                  ),
-                          tooltip:
-                              isDefault
-                                  ? 'Нельзя редактировать'
-                                  : 'Редактировать',
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed:
-                              isDefault ? null : () => _removeDrone(index),
-                          tooltip: isDefault ? 'Нельзя удалить' : 'Удалить',
-                        ),
-                      ],
-                    ),
-                  );
-                },
+        child: DroneListWidget(
+          drones: _droneManager.drones,
+          selectedDroneIndex: _droneManager.selectedDroneIndex,
+          onSelectDrone: _onSelectDrone,
+          onEditDrone:
+              (index) => _showDroneDialog(
+                drone: _droneManager.drones[index],
+                index: index,
               ),
-            ),
-          ],
+          onRemoveDrone: _onRemoveDrone,
+          isDefaultDrone: _droneManager.isDefaultDrone,
         ),
       ),
       actions: [
