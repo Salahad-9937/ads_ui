@@ -2,6 +2,8 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:async';
+import '../main_screen/menubar/connection_settings/drone_manager.dart';
+import '../main_screen/menubar/connection_settings/drone_config.dart';
 
 /// Сервис для управления WebSocket-соединением с сервером дрона.
 ///
@@ -13,6 +15,7 @@ import 'dart:async';
 /// [_autoReconnect] - Флаг, указывающий, включено ли автоматическое переподключение.
 /// [_explicitlyConnected] - Флаг, указывающий, было ли соединение инициировано явно.
 /// [_reconnectTimer] - Таймер для автоматического переподключения.
+/// [droneManager] - Менеджер для получения конфигурации активного дрона.
 /// [onStatusUpdate] - Callback для обновления статуса дрона.
 /// [onImageUpdate] - Callback для обновления изображения.
 /// [onConnectionUpdate] - Callback для обновления состояния соединения.
@@ -26,12 +29,14 @@ class WebSocketService {
   bool _autoReconnect = false;
   bool _explicitlyConnected = false;
   Timer? _reconnectTimer;
+  final DroneManager droneManager;
   final Function(Map<String, dynamic>) onStatusUpdate;
   final Function(Uint8List?) onImageUpdate;
   final Function(bool) onConnectionUpdate;
   final Function(bool) onAutoReconnectUpdate;
 
   WebSocketService({
+    required this.droneManager,
     required this.onStatusUpdate,
     required this.onImageUpdate,
     required this.onConnectionUpdate,
@@ -50,7 +55,20 @@ class WebSocketService {
     _explicitlyConnected = true;
 
     try {
-      _channel = WebSocketChannel.connect(Uri.parse('ws://localhost:8765'));
+      // Получаем конфигурацию активного дрона или используем значения по умолчанию
+      final drone =
+          droneManager.selectedDrone ??
+          DroneConfig(
+            name: 'Default Drone',
+            ipAddress: 'localhost',
+            port: 8765,
+            isVirtual: true,
+            sshUsername: '',
+            sshPassword: '',
+          );
+      final url = 'ws://${drone.ipAddress}:${drone.port}';
+      print('Connecting to: ws://${drone.ipAddress}:${drone.port}');
+      _channel = WebSocketChannel.connect(Uri.parse(url));
       onConnectionUpdate(true);
       _isConnected = true;
 

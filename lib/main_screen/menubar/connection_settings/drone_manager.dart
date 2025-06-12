@@ -9,11 +9,17 @@ class DroneManager {
 
   List<DroneConfig> _drones = [];
   int? _selectedDroneIndex;
+  Function? _onDroneSelected; // Callback для уведомления о смене дрона
 
   List<DroneConfig> get drones => List.unmodifiable(_drones);
   int? get selectedDroneIndex => _selectedDroneIndex;
   DroneConfig? get selectedDrone =>
       _selectedDroneIndex != null ? _drones[_selectedDroneIndex!] : null;
+
+  /// Устанавливает callback для уведомления о смене активного дрона.
+  void setOnDroneSelectedCallback(Function callback) {
+    _onDroneSelected = callback;
+  }
 
   /// Загружает список конфигураций дронов и индекс активного дрона из хранилища.
   Future<void> loadDrones() async {
@@ -40,6 +46,7 @@ class DroneManager {
     if (_selectedDroneIndex == null) {
       _selectedDroneIndex = _drones.length - 1;
       await _storage.saveSelectedDroneIndex(_selectedDroneIndex);
+      _onDroneSelected?.call(); // Уведомляем о смене дрона
     }
 
     await _storage.saveDrones(_drones);
@@ -53,6 +60,9 @@ class DroneManager {
     if (index >= 0 && index < _drones.length) {
       _drones[index] = config;
       await _storage.saveDrones(_drones);
+      if (_selectedDroneIndex == index) {
+        _onDroneSelected?.call(); // Уведомляем, если обновлён активный дрон
+      }
     }
   }
 
@@ -66,6 +76,7 @@ class DroneManager {
       // Если удален активный дрон, сбрасываем выбор или выбираем первый
       if (_selectedDroneIndex == index) {
         _selectedDroneIndex = _drones.isNotEmpty ? 0 : null;
+        _onDroneSelected?.call(); // Уведомляем о смене дрона
       } else if (_selectedDroneIndex != null && _selectedDroneIndex! > index) {
         _selectedDroneIndex = _selectedDroneIndex! - 1;
       }
@@ -82,6 +93,7 @@ class DroneManager {
     if (index >= 0 && index < _drones.length) {
       _selectedDroneIndex = index;
       await _storage.saveSelectedDroneIndex(_selectedDroneIndex);
+      _onDroneSelected?.call(); // Уведомляем о смене дрона
     }
   }
 

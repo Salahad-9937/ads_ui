@@ -6,6 +6,7 @@ import 'view_window/view_window.dart';
 import '../servises/websocket_service.dart';
 import 'panels/status_panel.dart';
 import 'panels/tasks_panel.dart';
+import 'menubar/connection_settings/drone_manager.dart';
 
 /// Главный экран приложения, отображающий интерфейс управления дроном.
 ///
@@ -24,6 +25,7 @@ class MainScreen extends StatefulWidget {
 
 class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   late WebSocketService webSocketService;
+  late DroneManager droneManager;
   Map<String, dynamic> droneStatus = {};
   Uint8List? currentImage;
   bool isConnected = false;
@@ -33,7 +35,10 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    droneManager = DroneManager();
+    droneManager.loadDrones(); // Загружаем конфигурации дронов
     webSocketService = WebSocketService(
+      droneManager: droneManager,
       onStatusUpdate: (status) {
         setState(() {
           droneStatus = status;
