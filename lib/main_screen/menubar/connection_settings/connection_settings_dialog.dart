@@ -1,13 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../../../domain/entities/drone_config.dart'; // Обновлённый импорт
+import '../../../domain/entities/drone_config.dart';
+import '../../../domain/use_cases/manage_drones_use_case.dart';
+import '../../../domain/repositories/drone_config_repository.dart';
 import 'drone_config_dialog.dart';
 import 'drone_manager.dart';
 import 'drone_list_widget.dart';
+import 'drone_config_storage.dart'; // Временный импорт для создания репозитория
 
 /// Диалоговое окно для управления списком конфигураций дронов.
-///
-/// [onSelectDrone] - Callback для возврата выбранного дрона.
-/// [webSocketService] - Сервис для управления WebSocket-соединением (опционально).
 class ConnectionSettingsDialog extends StatefulWidget {
   final Function(DroneConfig?)? onSelectDrone;
   final dynamic webSocketService;
@@ -23,56 +24,59 @@ class ConnectionSettingsDialog extends StatefulWidget {
       ConnectionSettingsDialogState();
 }
 
-/// Состояние диалогового окна для управления конфигурациями дронов.
 class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
-  final DroneManager _droneManager = DroneManager();
+  late final ManageDronesUseCase _useCase;
+  late final DroneManager _droneManager;
 
   @override
   void initState() {
     super.initState();
+    // Временное создание репозитория, в будущем использовать DI
+    final repository = DroneConfigStorage();
+    _useCase = ManageDronesUseCase(repository);
+    _droneManager = DroneManager(repository: repository);
     _loadDrones();
   }
 
   /// Загружает список конфигураций дронов и устанавливает активный дрон.
   Future<void> _loadDrones() async {
-    await _droneManager.loadDrones();
+    await _useCase.loadDrones();
     if (mounted) {
       setState(() {
-        widget.onSelectDrone?.call(_droneManager.selectedDrone);
-        widget.webSocketService?.updateDrone(_droneManager.selectedDrone);
+        widget.onSelectDrone?.call(_useCase.selectedDrone);
+        widget.webSocketService?.updateDrone(_useCase.selectedDrone);
       });
     }
   }
 
   /// Обработчик выбора дрона.
   Future<void> _onSelectDrone(int index) async {
-    await _droneManager.selectDrone(index);
+    await _useCase.selectDrone(index);
     if (mounted) {
       setState(() {
-        widget.onSelectDrone?.call(_droneManager.selectedDrone);
-        widget.webSocketService?.updateDrone(_droneManager.selectedDrone);
-        print(
-          'Dialog selected: ${_droneManager.selectedDrone?.name} (${_droneManager.selectedDrone?.ipAddress}:${_droneManager.selectedDrone?.port})',
-        );
+        widget.onSelectDrone?.call(_useCase.selectedDrone);
+        widget.webSocketService?.updateDrone(_useCase.selectedDrone);
+        if (kDebugMode) {
+          print(
+            'Dialog selected: ${_useCase.selectedDrone?.name} (${_useCase.selectedDrone?.ipAddress}:${_useCase.selectedDrone?.port})',
+          );
+        }
       });
     }
   }
 
   /// Обработчик удаления дрона.
   Future<void> _onRemoveDrone(int index) async {
-    await _droneManager.removeDrone(index);
+    await _useCase.removeDrone(index);
     if (mounted) {
       setState(() {
-        widget.onSelectDrone?.call(_droneManager.selectedDrone);
-        widget.webSocketService?.updateDrone(_droneManager.selectedDrone);
+        widget.onSelectDrone?.call(_useCase.selectedDrone);
+        widget.webSocketService?.updateDrone(_useCase.selectedDrone);
       });
     }
   }
 
-  /// Отображает диалоговое окно для добавления или редактирования конфигурации дрона.
-  ///
-  /// [drone] - Конфигурация дрона для редактирования (опционально).
-  /// [index] - Индекс редактируемой конфигурации в списке (опционально).
+  /// Отображает диалоговое окно для добавления или редактирования дрона.
   void _showDroneDialog({DroneConfig? drone, int? index}) {
     showDialog(
       context: context,
@@ -81,16 +85,14 @@ class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
             drone: drone,
             onSave: (config) async {
               if (index != null) {
-                await _droneManager.updateDrone(index, config);
+                await _useCase.updateDrone(index, config);
               } else {
-                await _droneManager.addDrone(config);
+                await _useCase.addDrone(config);
               }
               if (mounted) {
                 setState(() {
-                  widget.onSelectDrone?.call(_droneManager.selectedDrone);
-                  widget.webSocketService?.updateDrone(
-                    _droneManager.selectedDrone,
-                  );
+                  widget.onSelectDrone?.call(_useCase.selectedDrone);
+                  widget.webSocketService?.updateDrone(_useCase.selectedDrone);
                 });
               }
             },
@@ -118,16 +120,14 @@ class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
         width: screenWidth * 2 / 3,
         height: 300,
         child: DroneListWidget(
-          drones: _droneManager.drones,
-          selectedDroneIndex: _droneManager.selectedDroneIndex,
+          drones: _useCase.drones,
+          selectedDroneIndex: _useCase.selectedDroneIndex,
           onSelectDrone: _onSelectDrone,
           onEditDrone:
-              (index) => _showDroneDialog(
-                drone: _droneManager.drones[index],
-                index: index,
-              ),
+              (index) =>
+                  _showDroneDialog(drone: _useCase.drones[index], index: index),
           onRemoveDrone: _onRemoveDrone,
-          isDefaultDrone: _droneManager.isDefaultDrone,
+          isDefaultDrone: _useCase.isDefaultDrone,
         ),
       ),
       actions: [

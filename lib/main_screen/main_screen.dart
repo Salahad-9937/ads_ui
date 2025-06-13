@@ -1,5 +1,5 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'dart:typed_data';
 import 'menubar/menu_bar.dart';
 import 'panels/panel_container.dart';
 import 'view_window/view_window.dart';
@@ -7,16 +7,11 @@ import '../servises/websocket_service.dart';
 import 'panels/status_panel.dart';
 import 'panels/tasks_panel.dart';
 import 'menubar/connection_settings/drone_manager.dart';
+import 'menubar/connection_settings/drone_config_storage.dart'; // Новый импорт
 import '../domain/entities/drone_config.dart';
+import '../domain/repositories/drone_config_repository.dart'; // Новый импорт
 
 /// Главный экран приложения, отображающий интерфейс управления дроном.
-///
-/// [webSocketService] - Сервис для работы с WebSocket-соединением.
-/// [droneStatus] - Текущий статус дрона.
-/// [currentImage] - Текущее изображение с камеры дрона.
-/// [isConnected] - Флаг, указывающий, активно ли соединение с сервером.
-/// [isAutoReconnectEnabled] - Флаг, указывающий, включено ли автоматическое переподключение.
-/// [expandedView] - Идентификатор развернутого вида (например, 'camera1', 'camera2').
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -32,21 +27,19 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   bool isConnected = false;
   bool isAutoReconnectEnabled = false;
   String? expandedView;
-  DroneConfig? currentDrone; // Текущий активный дрон
+  DroneConfig? currentDrone;
 
   @override
   void initState() {
     super.initState();
-    droneManager = DroneManager();
-    droneManager.setOnDroneSelectedCallback(
-      _onDroneSelected,
-    ); // Подписываемся на смену дрона
+    // Временное создание репозитория, в будущем использовать DI
+    final repository = DroneConfigStorage();
+    droneManager = DroneManager(repository: repository);
+    droneManager.setOnDroneSelectedCallback(_onDroneSelected);
     droneManager.loadDrones().then((_) {
       setState(() {
-        currentDrone = droneManager.selectedDrone; // Инициализируем дрон
-        webSocketService.updateDrone(
-          currentDrone,
-        ); // Обновляем в WebSocketService
+        currentDrone = droneManager.selectedDrone;
+        webSocketService.updateDrone(currentDrone);
       });
     });
     webSocketService = WebSocketService(
@@ -77,13 +70,13 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   /// Обрабатывает смену активного дрона
   void _onDroneSelected() {
     setState(() {
-      currentDrone = droneManager.selectedDrone; // Обновляем текущий дрон
-      webSocketService.updateDrone(
-        currentDrone,
-      ); // Обновляем в WebSocketService
-      print(
-        'MainScreen: Drone changed to ${currentDrone?.name} (${currentDrone?.ipAddress}:${currentDrone?.port})',
-      );
+      currentDrone = droneManager.selectedDrone;
+      webSocketService.updateDrone(currentDrone);
+      if (kDebugMode) {
+        print(
+          'MainScreen: Drone changed to ${currentDrone?.name} (${currentDrone?.ipAddress}:${currentDrone?.port})',
+        );
+      }
     });
   }
 
