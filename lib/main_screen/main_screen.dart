@@ -1,14 +1,15 @@
-import 'package:flutter/foundation.dart';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import '../di.dart';
+import '../presentation/view_models/main_screen_view_model.dart';
+import '../domain/use_cases/manage_drones_use_case.dart';
+import '../domain/use_cases/manage_websocket_use_case.dart';
 import 'menubar/menu_bar.dart';
 import 'panels/panel_container.dart';
 import 'view_window/view_window.dart';
-import '../domain/use_cases/manage_websocket_use_case.dart';
-import '../domain/use_cases/manage_drones_use_case.dart';
 import 'panels/status_panel.dart';
 import 'panels/tasks_panel.dart';
-import '../domain/entities/drone_config.dart';
 
 /// Главный экран приложения, отображающий интерфейс управления дроном.
 class MainScreen extends StatefulWidget {
@@ -19,81 +20,49 @@ class MainScreen extends StatefulWidget {
 }
 
 class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
-  final ManageWebSocketUseCase _webSocketUseCase =
-      getIt<ManageWebSocketUseCase>();
-  final ManageDronesUseCase _dronesUseCase = getIt<ManageDronesUseCase>();
-  Map<String, dynamic> droneStatus = {};
-  Uint8List? currentImage;
-  bool isConnected = false;
-  bool isAutoReconnectEnabled = false;
-  String? expandedView;
-  DroneConfig? currentDrone;
+  final MainScreenViewModel _viewModel = getIt<MainScreenViewModel>();
+
+  Map<String, dynamic> _droneStatus = {};
+  Uint8List? _currentImage;
+  bool _isConnected = false;
+  bool _isAutoReconnectEnabled = false;
+  String? _expandedView;
 
   @override
   void initState() {
     super.initState();
-    _dronesUseCase.selectedDroneStream.listen(_onDroneSelected);
-    _dronesUseCase.loadDrones().then((_) {
+    // Подписка на потоки из ViewModel
+    _viewModel.droneStatusStream.listen((status) {
       setState(() {
-        currentDrone = _dronesUseCase.selectedDrone;
-        _webSocketUseCase.updateDrone(currentDrone);
+        _droneStatus = status;
       });
     });
-
-    // Подписка на потоки
-    _webSocketUseCase.droneStatusStream.listen((status) {
+    _viewModel.imageStream.listen((image) {
       setState(() {
-        droneStatus = status;
+        _currentImage = image;
       });
     });
-    _webSocketUseCase.imageStream.listen((image) {
+    _viewModel.connectionStream.listen((connected) {
       setState(() {
-        currentImage = image;
+        _isConnected = connected;
       });
     });
-    _webSocketUseCase.connectionStream.listen((connected) {
+    _viewModel.autoReconnectStream.listen((enabled) {
       setState(() {
-        isConnected = connected;
+        _isAutoReconnectEnabled = enabled;
       });
     });
-    _webSocketUseCase.autoReconnectStream.listen((enabled) {
+    _viewModel.expandedViewStream.listen((view) {
       setState(() {
-        isAutoReconnectEnabled = enabled;
+        _expandedView = view;
       });
-    });
-  }
-
-  /// Обрабатывает смену активного дрона
-  void _onDroneSelected(DroneConfig? drone) {
-    setState(() {
-      currentDrone = drone;
-      _webSocketUseCase.updateDrone(currentDrone);
-      if (kDebugMode) {
-        print(
-          'MainScreen: Drone changed to ${currentDrone?.name} (${currentDrone?.ipAddress}:${currentDrone?.port})',
-        );
-      }
     });
   }
 
   @override
   void dispose() {
-    _webSocketUseCase.dispose();
-    _dronesUseCase.dispose();
+    _viewModel.dispose();
     super.dispose();
-  }
-
-  /// Переключает развернутый вид для указанного представления.
-  ///
-  /// [view] - Идентификатор представления (например, 'camera1', 'camera2').
-  void toggleView(String view) {
-    setState(() {
-      if (expandedView == view) {
-        expandedView = null;
-      } else {
-        expandedView = view;
-      }
-    });
   }
 
   @override
@@ -102,28 +71,28 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(50),
         child: DroneMenuBar(
-          isConnected: isConnected,
-          isAutoReconnectEnabled: isAutoReconnectEnabled,
-          onConnect: _webSocketUseCase.connectToServer,
-          onDisconnect: _webSocketUseCase.disconnect,
-          onToggleReconnect: _webSocketUseCase.toggleAutoReconnect,
-          dronesUseCase: _dronesUseCase,
-          webSocketUseCase: _webSocketUseCase,
+          isConnected: _isConnected,
+          isAutoReconnectEnabled: _isAutoReconnectEnabled,
+          onConnect: _viewModel.connectToServer,
+          onDisconnect: _viewModel.disconnect,
+          onToggleReconnect: _viewModel.toggleAutoReconnect,
+          dronesUseCase: getIt.get<ManageDronesUseCase>(),
+          webSocketUseCase: getIt.get<ManageWebSocketUseCase>(),
         ),
       ),
       body: Row(
         children: [
           PanelContainer(
             isLeftPanel: true,
-            child: StatusPanel(droneStatus: droneStatus),
+            child: StatusPanel(droneStatus: _droneStatus),
           ),
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return MainWindow(
-                  currentImage: currentImage,
-                  expandedView: expandedView,
-                  toggleView: toggleView,
+                  currentImage: _currentImage,
+                  expandedView: _expandedView,
+                  toggleView: _viewModel.toggleView,
                   constraints: constraints,
                 );
               },
