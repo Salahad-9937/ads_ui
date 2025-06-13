@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'connection_settings/connection_settings_dialog.dart';
 import 'connection_settings/drone_manager.dart';
+import '../../../domain/use_cases/manage_websocket_use_case.dart';
 
 /// Меню приложения для управления подключением и настройками дрона.
 ///
@@ -11,7 +12,7 @@ import 'connection_settings/drone_manager.dart';
 /// [onDisconnect] - Callback для отключения от сервера.
 /// [onToggleReconnect] - Callback для переключения автоматического переподключения.
 /// [droneManager] - Менеджер для управления конфигурациями дронов.
-/// [webSocketService] - Сервис для управления WebSocket-соединением.
+/// [webSocketUseCase] - Use case для управления WebSocket-соединением.
 class DroneMenuBar extends StatelessWidget {
   final bool isConnected;
   final bool isAutoReconnectEnabled;
@@ -19,7 +20,7 @@ class DroneMenuBar extends StatelessWidget {
   final VoidCallback onDisconnect;
   final VoidCallback onToggleReconnect;
   final DroneManager droneManager;
-  final dynamic webSocketService;
+  final ManageWebSocketUseCase webSocketUseCase;
 
   const DroneMenuBar({
     super.key,
@@ -29,7 +30,7 @@ class DroneMenuBar extends StatelessWidget {
     required this.onDisconnect,
     required this.onToggleReconnect,
     required this.droneManager,
-    required this.webSocketService,
+    required this.webSocketUseCase,
   });
 
   @override
@@ -77,7 +78,7 @@ class DroneMenuBar extends StatelessWidget {
                           onSelectDrone: (drone) {
                             // Обновление UI не требуется здесь, так как это обрабатывается в ConnectionSettingsDialog
                           },
-                          webSocketService: webSocketService,
+                          webSocketUseCase: webSocketUseCase,
                         ),
                   );
                 },

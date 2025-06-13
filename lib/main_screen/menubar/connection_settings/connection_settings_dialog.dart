@@ -1,7 +1,9 @@
+// lib/main_screen/menubar/connection_settings/connection_settings_dialog.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../domain/entities/drone_config.dart';
 import '../../../domain/use_cases/manage_drones_use_case.dart';
+import '../../../domain/use_cases/manage_websocket_use_case.dart';
 import 'drone_config_dialog.dart';
 import 'drone_list_widget.dart';
 import 'drone_config_storage.dart'; // Временный импорт для создания репозитория
@@ -9,12 +11,12 @@ import 'drone_config_storage.dart'; // Временный импорт для с
 /// Диалоговое окно для управления списком конфигураций дронов.
 class ConnectionSettingsDialog extends StatefulWidget {
   final Function(DroneConfig?)? onSelectDrone;
-  final dynamic webSocketService;
+  final ManageWebSocketUseCase webSocketUseCase;
 
   const ConnectionSettingsDialog({
     super.key,
     this.onSelectDrone,
-    this.webSocketService,
+    required this.webSocketUseCase,
   });
 
   @override
@@ -40,7 +42,7 @@ class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
     if (mounted) {
       setState(() {
         widget.onSelectDrone?.call(_useCase.selectedDrone);
-        widget.webSocketService?.updateDrone(_useCase.selectedDrone);
+        widget.webSocketUseCase.updateDrone(_useCase.selectedDrone);
       });
     }
   }
@@ -51,7 +53,7 @@ class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
     if (mounted) {
       setState(() {
         widget.onSelectDrone?.call(_useCase.selectedDrone);
-        widget.webSocketService?.updateDrone(_useCase.selectedDrone);
+        widget.webSocketUseCase.updateDrone(_useCase.selectedDrone);
         if (kDebugMode) {
           print(
             'Dialog selected: ${_useCase.selectedDrone?.name} (${_useCase.selectedDrone?.ipAddress}:${_useCase.selectedDrone?.port})',
@@ -67,7 +69,7 @@ class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
     if (mounted) {
       setState(() {
         widget.onSelectDrone?.call(_useCase.selectedDrone);
-        widget.webSocketService?.updateDrone(_useCase.selectedDrone);
+        widget.webSocketUseCase.updateDrone(_useCase.selectedDrone);
       });
     }
   }
@@ -88,7 +90,7 @@ class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
               if (mounted) {
                 setState(() {
                   widget.onSelectDrone?.call(_useCase.selectedDrone);
-                  widget.webSocketService?.updateDrone(_useCase.selectedDrone);
+                  widget.webSocketUseCase.updateDrone(_useCase.selectedDrone);
                 });
               }
             },

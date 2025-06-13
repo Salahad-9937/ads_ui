@@ -116,8 +116,7 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           onDisconnect: _webSocketUseCase.disconnect,
           onToggleReconnect: _webSocketUseCase.toggleAutoReconnect,
           droneManager: droneManager,
-          webSocketService:
-              _webSocketUseCase, // Временная передача для совместимости
+          webSocketUseCase: _webSocketUseCase, // Изменено с webSocketService
         ),
       ),
       body: Row(
