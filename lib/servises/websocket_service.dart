@@ -34,6 +34,7 @@ class WebSocketService {
   final Function(Uint8List?) onImageUpdate;
   final Function(bool) onConnectionUpdate;
   final Function(bool) onAutoReconnectUpdate;
+  DroneConfig? _currentDrone; // Текущий дрон для подключения
 
   WebSocketService({
     required this.droneManager,
@@ -41,12 +42,31 @@ class WebSocketService {
     required this.onImageUpdate,
     required this.onConnectionUpdate,
     required this.onAutoReconnectUpdate,
-  });
+  }) {
+    _currentDrone = droneManager.selectedDrone;
+    droneManager.setOnDroneSelectedCallback(_onDroneSelected);
+  }
 
   bool get isConnected => _isConnected;
   Map<String, dynamic> get droneStatus => _droneStatus;
   Uint8List? get currentImage => _currentImage;
   bool get autoReconnect => _autoReconnect;
+
+  /// Обновляет текущий дрон для подключения
+  void updateDrone(DroneConfig? drone) {
+    _currentDrone = drone;
+    print(
+      'Updated drone: ${_currentDrone?.name} (${_currentDrone?.ipAddress}:${_currentDrone?.port})',
+    );
+    if (_isConnected) {
+      disconnect();
+      if (_explicitlyConnected) {
+        connectToServer();
+      }
+    }
+    onStatusUpdate({});
+    onImageUpdate(null);
+  }
 
   /// Устанавливает соединение с сервером через WebSocket.
   void connectToServer() async {
@@ -57,7 +77,7 @@ class WebSocketService {
     try {
       // Получаем конфигурацию активного дрона или используем значения по умолчанию
       final drone =
-          droneManager.selectedDrone ??
+          _currentDrone ??
           DroneConfig(
             name: 'Default Drone',
             ipAddress: 'localhost',
@@ -74,24 +94,31 @@ class WebSocketService {
 
       _channel!.stream.listen(
         (data) {
-          final message = json.decode(data);
-          if (message['type'] == 'status') {
-            _droneStatus = message['data'];
-            onStatusUpdate(_droneStatus);
-          } else if (message['type'] == 'image') {
-            _currentImage = base64Decode(message['data']);
-            onImageUpdate(_currentImage);
+          try {
+            final message = json.decode(data);
+            if (message['type'] == 'status') {
+              _droneStatus = message['data'];
+              onStatusUpdate(_droneStatus);
+            } else if (message['type'] == 'image') {
+              _currentImage = base64Decode(message['data']);
+              onImageUpdate(_currentImage);
+            }
+          } catch (e) {
+            print('Error parsing WebSocket data: $e');
           }
         },
         onError: (error) {
+          print('WebSocket error: $error');
           _handleDisconnect();
         },
         onDone: () {
+          print('WebSocket closed');
           _handleDisconnect();
         },
         cancelOnError: true,
       );
     } catch (e) {
+      print('Connection error: $e');
       _handleDisconnect();
     } finally {
       _isReconnecting = false;
@@ -110,6 +137,7 @@ class WebSocketService {
     onConnectionUpdate(false);
     onStatusUpdate({});
     onImageUpdate(null);
+    print('Disconnected from WebSocket');
   }
 
   /// Включает или отключает автоматическое переподключение.
@@ -152,6 +180,22 @@ class WebSocketService {
         timer.cancel();
       }
     });
+  }
+
+  /// Обрабатывает смену активного дрона.
+  void _onDroneSelected() {
+    _currentDrone = droneManager.selectedDrone;
+    print(
+      'Drone selected: ${_currentDrone?.name} (${_currentDrone?.ipAddress}:${_currentDrone?.port})',
+    );
+    if (_isConnected) {
+      disconnect();
+      if (_explicitlyConnected) {
+        connectToServer();
+      }
+    }
+    onStatusUpdate({});
+    onImageUpdate(null);
   }
 
   /// Освобождает ресурсы, закрывая соединение и отменяя таймер.

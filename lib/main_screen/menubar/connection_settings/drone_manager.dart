@@ -31,6 +31,7 @@ class DroneManager {
           selectedIndex != null && selectedIndex < _drones.length
               ? selectedIndex
               : 0;
+      _onDroneSelected?.call(); // Уведомляем о выборе дрона при загрузке
     } else {
       _selectedDroneIndex = null;
     }
@@ -76,13 +77,14 @@ class DroneManager {
       // Если удален активный дрон, сбрасываем выбор или выбираем первый
       if (_selectedDroneIndex == index) {
         _selectedDroneIndex = _drones.isNotEmpty ? 0 : null;
+        await _storage.saveSelectedDroneIndex(_selectedDroneIndex);
         _onDroneSelected?.call(); // Уведомляем о смене дрона
       } else if (_selectedDroneIndex != null && _selectedDroneIndex! > index) {
         _selectedDroneIndex = _selectedDroneIndex! - 1;
+        await _storage.saveSelectedDroneIndex(_selectedDroneIndex);
       }
 
       await _storage.saveDrones(_drones);
-      await _storage.saveSelectedDroneIndex(_selectedDroneIndex);
     }
   }
 

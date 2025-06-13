@@ -7,6 +7,7 @@ import '../servises/websocket_service.dart';
 import 'panels/status_panel.dart';
 import 'panels/tasks_panel.dart';
 import 'menubar/connection_settings/drone_manager.dart';
+import 'menubar/connection_settings/drone_config.dart';
 
 /// Главный экран приложения, отображающий интерфейс управления дроном.
 ///
@@ -31,12 +32,23 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   bool isConnected = false;
   bool isAutoReconnectEnabled = false;
   String? expandedView;
+  DroneConfig? currentDrone; // Текущий активный дрон
 
   @override
   void initState() {
     super.initState();
     droneManager = DroneManager();
-    droneManager.loadDrones(); // Загружаем конфигурации дронов
+    droneManager.setOnDroneSelectedCallback(
+      _onDroneSelected,
+    ); // Подписываемся на смену дрона
+    droneManager.loadDrones().then((_) {
+      setState(() {
+        currentDrone = droneManager.selectedDrone; // Инициализируем дрон
+        webSocketService.updateDrone(
+          currentDrone,
+        ); // Обновляем в WebSocketService
+      });
+    });
     webSocketService = WebSocketService(
       droneManager: droneManager,
       onStatusUpdate: (status) {
@@ -60,6 +72,19 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
         });
       },
     );
+  }
+
+  /// Обрабатывает смену активного дрона
+  void _onDroneSelected() {
+    setState(() {
+      currentDrone = droneManager.selectedDrone; // Обновляем текущий дрон
+      webSocketService.updateDrone(
+        currentDrone,
+      ); // Обновляем в WebSocketService
+      print(
+        'MainScreen: Drone changed to ${currentDrone?.name} (${currentDrone?.ipAddress}:${currentDrone?.port})',
+      );
+    });
   }
 
   @override
@@ -92,6 +117,8 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           onConnect: webSocketService.connectToServer,
           onDisconnect: webSocketService.disconnect,
           onToggleReconnect: webSocketService.toggleAutoReconnect,
+          droneManager: droneManager,
+          webSocketService: webSocketService,
         ),
       ),
       body: Row(

@@ -7,10 +7,16 @@ import 'drone_list_widget.dart';
 /// Диалоговое окно для управления списком конфигураций дронов.
 ///
 /// [onSelectDrone] - Callback для возврата выбранного дрона.
+/// [webSocketService] - Сервис для управления WebSocket-соединением (опционально).
 class ConnectionSettingsDialog extends StatefulWidget {
   final Function(DroneConfig?)? onSelectDrone;
+  final dynamic webSocketService; // Добавляем сервис WebSocket
 
-  const ConnectionSettingsDialog({super.key, this.onSelectDrone});
+  const ConnectionSettingsDialog({
+    super.key,
+    this.onSelectDrone,
+    this.webSocketService,
+  });
 
   @override
   ConnectionSettingsDialogState createState() =>
@@ -30,25 +36,37 @@ class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
   /// Загружает список конфигураций дронов и устанавливает активный дрон.
   Future<void> _loadDrones() async {
     await _droneManager.loadDrones();
-    setState(() {
-      widget.onSelectDrone?.call(_droneManager.selectedDrone);
-    });
+    if (mounted) {
+      setState(() {
+        widget.onSelectDrone?.call(_droneManager.selectedDrone);
+        widget.webSocketService?.updateDrone(_droneManager.selectedDrone);
+      });
+    }
   }
 
   /// Обработчик выбора дрона.
   Future<void> _onSelectDrone(int index) async {
     await _droneManager.selectDrone(index);
-    setState(() {
-      widget.onSelectDrone?.call(_droneManager.selectedDrone);
-    });
+    if (mounted) {
+      setState(() {
+        widget.onSelectDrone?.call(_droneManager.selectedDrone);
+        widget.webSocketService?.updateDrone(_droneManager.selectedDrone);
+        print(
+          'Dialog selected: ${_droneManager.selectedDrone?.name} (${_droneManager.selectedDrone?.ipAddress}:${_droneManager.selectedDrone?.port})',
+        );
+      });
+    }
   }
 
   /// Обработчик удаления дрона.
   Future<void> _onRemoveDrone(int index) async {
     await _droneManager.removeDrone(index);
-    setState(() {
-      widget.onSelectDrone?.call(_droneManager.selectedDrone);
-    });
+    if (mounted) {
+      setState(() {
+        widget.onSelectDrone?.call(_droneManager.selectedDrone);
+        widget.webSocketService?.updateDrone(_droneManager.selectedDrone);
+      });
+    }
   }
 
   /// Отображает диалоговое окно для добавления или редактирования конфигурации дрона.
@@ -67,9 +85,14 @@ class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
               } else {
                 await _droneManager.addDrone(config);
               }
-              setState(() {
-                widget.onSelectDrone?.call(_droneManager.selectedDrone);
-              });
+              if (mounted) {
+                setState(() {
+                  widget.onSelectDrone?.call(_droneManager.selectedDrone);
+                  widget.webSocketService?.updateDrone(
+                    _droneManager.selectedDrone,
+                  );
+                });
+              }
             },
           ),
     );
