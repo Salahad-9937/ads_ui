@@ -9,7 +9,7 @@ import 'panels/tasks_panel.dart';
 import 'menubar/connection_settings/drone_manager.dart';
 import 'menubar/connection_settings/drone_config_storage.dart'; // Новый импорт
 import '../domain/entities/drone_config.dart';
-import '../domain/repositories/drone_config_repository.dart'; // Новый импорт
+// Новый импорт
 
 /// Главный экран приложения, отображающий интерфейс управления дроном.
 class MainScreen extends StatefulWidget {

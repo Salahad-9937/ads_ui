@@ -2,9 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../domain/entities/drone_config.dart';
 import '../../../domain/use_cases/manage_drones_use_case.dart';
-import '../../../domain/repositories/drone_config_repository.dart';
 import 'drone_config_dialog.dart';
-import 'drone_manager.dart';
 import 'drone_list_widget.dart';
 import 'drone_config_storage.dart'; // Временный импорт для создания репозитория
 
@@ -26,7 +24,6 @@ class ConnectionSettingsDialog extends StatefulWidget {
 
 class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
   late final ManageDronesUseCase _useCase;
-  late final DroneManager _droneManager;
 
   @override
   void initState() {
@@ -34,7 +31,6 @@ class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
     // Временное создание репозитория, в будущем использовать DI
     final repository = DroneConfigStorage();
     _useCase = ManageDronesUseCase(repository);
-    _droneManager = DroneManager(repository: repository);
     _loadDrones();
   }
 
