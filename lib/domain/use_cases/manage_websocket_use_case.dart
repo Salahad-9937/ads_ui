@@ -1,4 +1,3 @@
-// lib/domain/use_cases/manage_websocket_use_case.dart
 import 'dart:typed_data';
 import '../../servises/websocket_service.dart';
 import '../entities/drone_config.dart';

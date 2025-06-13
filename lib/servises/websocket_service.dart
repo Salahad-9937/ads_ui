@@ -1,9 +1,8 @@
-// lib/servises/websocket_service.dart
 import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:convert';
 import 'dart:async';
-import '../main_screen/menubar/connection_settings/drone_manager.dart';
+import '../domain/use_cases/manage_drones_use_case.dart';
 import '../domain/entities/drone_config.dart';
 
 /// Сервис для управления WebSocket-соединением с сервером дрона.
@@ -16,7 +15,7 @@ class WebSocketService {
   bool _autoReconnect = false;
   bool _explicitlyConnected = false;
   Timer? _reconnectTimer;
-  final DroneManager droneManager;
+  final ManageDronesUseCase dronesUseCase;
   DroneConfig? _currentDrone;
 
   final StreamController<Map<String, dynamic>> _droneStatusController =
@@ -28,9 +27,9 @@ class WebSocketService {
   final StreamController<bool> _autoReconnectController =
       StreamController<bool>.broadcast();
 
-  WebSocketService({required this.droneManager}) {
-    _currentDrone = droneManager.selectedDrone;
-    droneManager.setOnDroneSelectedCallback(_onDroneSelected);
+  WebSocketService({required this.dronesUseCase}) {
+    _currentDrone = dronesUseCase.selectedDrone;
+    dronesUseCase.selectedDroneStream.listen(_onDroneSelected);
   }
 
   Stream<Map<String, dynamic>> get droneStatusStream =>
@@ -188,8 +187,8 @@ class WebSocketService {
   }
 
   /// Обрабатывает смену активного дрона.
-  void _onDroneSelected() {
-    _currentDrone = droneManager.selectedDrone;
+  void _onDroneSelected(DroneConfig? drone) {
+    _currentDrone = drone;
     if (kDebugMode) {
       print(
         'Drone selected: ${_currentDrone?.name} (${_currentDrone?.ipAddress}:${_currentDrone?.port})',

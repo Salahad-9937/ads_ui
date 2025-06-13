@@ -1,25 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'connection_settings/connection_settings_dialog.dart';
-import 'connection_settings/drone_manager.dart';
+import '../../../domain/use_cases/manage_drones_use_case.dart';
 import '../../../domain/use_cases/manage_websocket_use_case.dart';
 
 /// Меню приложения для управления подключением и настройками дрона.
-///
-/// [isConnected] - Флаг, указывающий, активно ли соединение с дроном.
-/// [isAutoReconnectEnabled] - Флаг, указывающий, включено ли автоматическое переподключение.
-/// [onConnect] - Callback для подключения к серверу.
-/// [onDisconnect] - Callback для отключения от сервера.
-/// [onToggleReconnect] - Callback для переключения автоматического переподключения.
-/// [droneManager] - Менеджер для управления конфигурациями дронов.
-/// [webSocketUseCase] - Use case для управления WebSocket-соединением.
 class DroneMenuBar extends StatelessWidget {
   final bool isConnected;
   final bool isAutoReconnectEnabled;
   final VoidCallback onConnect;
   final VoidCallback onDisconnect;
   final VoidCallback onToggleReconnect;
-  final DroneManager droneManager;
+  final ManageDronesUseCase dronesUseCase;
   final ManageWebSocketUseCase webSocketUseCase;
 
   const DroneMenuBar({
@@ -29,7 +21,7 @@ class DroneMenuBar extends StatelessWidget {
     required this.onConnect,
     required this.onDisconnect,
     required this.onToggleReconnect,
-    required this.droneManager,
+    required this.dronesUseCase,
     required this.webSocketUseCase,
   });
 
@@ -76,7 +68,7 @@ class DroneMenuBar extends StatelessWidget {
                     builder:
                         (context) => ConnectionSettingsDialog(
                           onSelectDrone: (drone) {
-                            // Обновление UI не требуется здесь, так как это обрабатывается в ConnectionSettingsDialog
+                            // Обновление UI не требуется здесь
                           },
                           webSocketUseCase: webSocketUseCase,
                         ),

@@ -1,4 +1,3 @@
-// lib/main_screen/menubar/connection_settings/connection_settings_dialog.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../di.dart';

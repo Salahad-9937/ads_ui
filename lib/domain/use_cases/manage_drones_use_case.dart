@@ -1,8 +1,11 @@
+import 'dart:async';
 import '../entities/drone_config.dart';
 import '../repositories/drone_config_repository.dart';
 
 class ManageDronesUseCase {
   final DroneConfigRepository _repository;
+  final StreamController<DroneConfig?> _selectedDroneController =
+      StreamController<DroneConfig?>.broadcast();
 
   ManageDronesUseCase(this._repository);
 
@@ -15,6 +18,8 @@ class ManageDronesUseCase {
       _selectedDroneIndex != null && _selectedDroneIndex! < _drones.length
           ? _drones[_selectedDroneIndex!]
           : null;
+  Stream<DroneConfig?> get selectedDroneStream =>
+      _selectedDroneController.stream;
 
   /// Загружает список дронов и активный дрон.
   Future<void> loadDrones() async {
@@ -28,6 +33,7 @@ class ManageDronesUseCase {
     } else {
       _selectedDroneIndex = null;
     }
+    _selectedDroneController.add(selectedDrone);
   }
 
   /// Добавляет новый дрон.
@@ -36,6 +42,7 @@ class ManageDronesUseCase {
     if (_selectedDroneIndex == null) {
       _selectedDroneIndex = _drones.length - 1;
       await _repository.saveSelectedDroneIndex(_selectedDroneIndex);
+      _selectedDroneController.add(selectedDrone);
     }
     await _repository.saveDrones(_drones);
   }
@@ -45,6 +52,9 @@ class ManageDronesUseCase {
     if (index >= 0 && index < _drones.length) {
       _drones[index] = config;
       await _repository.saveDrones(_drones);
+      if (_selectedDroneIndex == index) {
+        _selectedDroneController.add(selectedDrone);
+      }
     }
   }
 
@@ -55,9 +65,11 @@ class ManageDronesUseCase {
       if (_selectedDroneIndex == index) {
         _selectedDroneIndex = _drones.isNotEmpty ? 0 : null;
         await _repository.saveSelectedDroneIndex(_selectedDroneIndex);
+        _selectedDroneController.add(selectedDrone);
       } else if (_selectedDroneIndex != null && _selectedDroneIndex! > index) {
         _selectedDroneIndex = _selectedDroneIndex! - 1;
         await _repository.saveSelectedDroneIndex(_selectedDroneIndex);
+        _selectedDroneController.add(selectedDrone);
       }
       await _repository.saveDrones(_drones);
     }
@@ -68,11 +80,17 @@ class ManageDronesUseCase {
     if (index >= 0 && index < _drones.length) {
       _selectedDroneIndex = index;
       await _repository.saveSelectedDroneIndex(_selectedDroneIndex);
+      _selectedDroneController.add(selectedDrone);
     }
   }
 
   /// Проверяет, является ли дрон конфигурацией по умолчанию.
   bool isDefaultDrone(DroneConfig drone) {
     return drone.name == 'Default Drone' && drone.ipAddress == 'localhost';
+  }
+
+  /// Освобождает ресурсы.
+  void dispose() {
+    _selectedDroneController.close();
   }
 }

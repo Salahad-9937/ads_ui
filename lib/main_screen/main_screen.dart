@@ -1,4 +1,3 @@
-// lib/main_screen/main_screen.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../di.dart';
@@ -6,9 +5,9 @@ import 'menubar/menu_bar.dart';
 import 'panels/panel_container.dart';
 import 'view_window/view_window.dart';
 import '../domain/use_cases/manage_websocket_use_case.dart';
+import '../domain/use_cases/manage_drones_use_case.dart';
 import 'panels/status_panel.dart';
 import 'panels/tasks_panel.dart';
-import 'menubar/connection_settings/drone_manager.dart';
 import '../domain/entities/drone_config.dart';
 
 /// Главный экран приложения, отображающий интерфейс управления дроном.
@@ -22,7 +21,7 @@ class MainScreen extends StatefulWidget {
 class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   final ManageWebSocketUseCase _webSocketUseCase =
       getIt<ManageWebSocketUseCase>();
-  final DroneManager droneManager = getIt<DroneManager>();
+  final ManageDronesUseCase _dronesUseCase = getIt<ManageDronesUseCase>();
   Map<String, dynamic> droneStatus = {};
   Uint8List? currentImage;
   bool isConnected = false;
@@ -33,10 +32,10 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    droneManager.setOnDroneSelectedCallback(_onDroneSelected);
-    droneManager.loadDrones().then((_) {
+    _dronesUseCase.selectedDroneStream.listen(_onDroneSelected);
+    _dronesUseCase.loadDrones().then((_) {
       setState(() {
-        currentDrone = droneManager.selectedDrone;
+        currentDrone = _dronesUseCase.selectedDrone;
         _webSocketUseCase.updateDrone(currentDrone);
       });
     });
@@ -65,9 +64,9 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   }
 
   /// Обрабатывает смену активного дрона
-  void _onDroneSelected() {
+  void _onDroneSelected(DroneConfig? drone) {
     setState(() {
-      currentDrone = droneManager.selectedDrone;
+      currentDrone = drone;
       _webSocketUseCase.updateDrone(currentDrone);
       if (kDebugMode) {
         print(
@@ -80,6 +79,7 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   @override
   void dispose() {
     _webSocketUseCase.dispose();
+    _dronesUseCase.dispose();
     super.dispose();
   }
 
@@ -107,7 +107,7 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           onConnect: _webSocketUseCase.connectToServer,
           onDisconnect: _webSocketUseCase.disconnect,
           onToggleReconnect: _webSocketUseCase.toggleAutoReconnect,
-          droneManager: droneManager,
+          dronesUseCase: _dronesUseCase,
           webSocketUseCase: _webSocketUseCase,
         ),
       ),
