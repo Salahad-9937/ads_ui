@@ -4,6 +4,7 @@ import 'servises/websocket_service.dart';
 import 'domain/use_cases/manage_websocket_use_case.dart';
 import 'domain/use_cases/manage_drones_use_case.dart';
 import 'presentation/view_models/main_screen_view_model.dart';
+import 'presentation/view_models/status_panel_view_model.dart';
 
 final getIt = GetIt.instance;
 
@@ -25,10 +26,15 @@ void setupDependencies() {
   getIt.registerSingleton<ManageWebSocketUseCase>(
     ManageWebSocketUseCase(webSocketService: getIt<WebSocketService>()),
   );
+
+  // Регистрация MainScreenViewModel
   getIt.registerSingleton<MainScreenViewModel>(
     MainScreenViewModel(
       webSocketUseCase: getIt<ManageWebSocketUseCase>(),
       dronesUseCase: getIt<ManageDronesUseCase>(),
     ),
   );
+
+  // Регистрация StatusPanelViewModel
+  getIt.registerFactory<StatusPanelViewModel>(() => StatusPanelViewModel());
 }

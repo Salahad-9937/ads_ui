@@ -1,12 +1,39 @@
+// lib/main_screen/panels/status_panel.dart
 import 'package:flutter/material.dart';
 
-/// Панель для отображения текущего статуса дрона.
-///
-/// [droneStatus] - Карта с данными статуса дрона.
-class StatusPanel extends StatelessWidget {
-  final Map<String, dynamic> droneStatus;
+import '../../presentation/view_models/status_panel_view_model.dart';
 
-  const StatusPanel({super.key, required this.droneStatus});
+/// Панель для отображения текущего статуса дрона.
+class StatusPanel extends StatefulWidget {
+  const StatusPanel({super.key});
+
+  @override
+  StatusPanelState createState() => StatusPanelState();
+}
+
+class StatusPanelState extends State<StatusPanel> {
+  final StatusPanelViewModel _viewModel = StatusPanelViewModel();
+  List<Map<String, dynamic>> _statusItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _viewModel.statusStream.listen((items) {
+      setState(() {
+        _statusItems = items;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _viewModel.dispose();
+    super.dispose();
+  }
+
+  void updateStatus(Map<String, dynamic> droneStatus) {
+    _viewModel.updateStatus(droneStatus);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,37 +45,13 @@ class StatusPanel extends StatelessWidget {
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
-        if (droneStatus.isNotEmpty) ...[
-          StatusItem(
-            'Батарея',
-            droneStatus['battery']?.toString() ?? 'N/A',
-            Icons.battery_full,
-          ),
-          StatusItem(
-            'Высота',
-            droneStatus['altitude']?.toString() ?? 'N/A',
-            Icons.height,
-          ),
-          StatusItem(
-            'Скорость',
-            droneStatus['speed']?.toString() ?? 'N/A',
-            Icons.speed,
-          ),
-          StatusItem(
-            'Температура',
-            droneStatus['temperature']?.toString() ?? 'N/A',
-            Icons.thermostat,
-          ),
-          StatusItem(
-            'GPS Широта',
-            droneStatus['gps_lat']?.toString() ?? 'N/A',
-            Icons.location_on,
-          ),
-          StatusItem(
-            'GPS Долгота',
-            droneStatus['gps_lon']?.toString() ?? 'N/A',
-            Icons.location_on,
-          ),
+        if (_statusItems.isNotEmpty) ...[
+          for (final item in _statusItems)
+            StatusItem(
+              item['label'] as String,
+              item['value'] as String,
+              item['icon'] as IconData,
+            ),
         ] else
           const Center(child: Text('Данные статуса отсутствуют')),
       ],

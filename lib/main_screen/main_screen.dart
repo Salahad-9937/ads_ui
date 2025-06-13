@@ -22,7 +22,6 @@ class MainScreen extends StatefulWidget {
 class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   final MainScreenViewModel _viewModel = getIt<MainScreenViewModel>();
 
-  Map<String, dynamic> _droneStatus = {};
   Uint8List? _currentImage;
   bool _isConnected = false;
   bool _isAutoReconnectEnabled = false;
@@ -34,7 +33,7 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
     // Подписка на потоки из ViewModel
     _viewModel.droneStatusStream.listen((status) {
       setState(() {
-        _droneStatus = status;
+        _statusPanelKey.currentState?.updateStatus(status);
       });
     });
     _viewModel.imageStream.listen((image) {
@@ -58,6 +57,8 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
       });
     });
   }
+
+  final _statusPanelKey = GlobalKey<StatusPanelState>();
 
   @override
   void dispose() {
@@ -84,7 +85,7 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
         children: [
           PanelContainer(
             isLeftPanel: true,
-            child: StatusPanel(droneStatus: _droneStatus),
+            child: StatusPanel(key: _statusPanelKey),
           ),
           Expanded(
             child: LayoutBuilder(
