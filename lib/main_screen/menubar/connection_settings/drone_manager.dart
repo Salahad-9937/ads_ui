@@ -1,4 +1,4 @@
-import 'drone_config.dart';
+import '../../../domain/entities/drone_config.dart';
 import 'drone_config_storage.dart';
 
 /// Менеджер для управления конфигурациями дронов и их состоянием.

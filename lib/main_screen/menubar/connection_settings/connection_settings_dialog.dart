@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'drone_config.dart';
+import '../../../domain/entities/drone_config.dart'; // Обновлённый импорт
 import 'drone_config_dialog.dart';
 import 'drone_manager.dart';
 import 'drone_list_widget.dart';
@@ -10,7 +10,7 @@ import 'drone_list_widget.dart';
 /// [webSocketService] - Сервис для управления WebSocket-соединением (опционально).
 class ConnectionSettingsDialog extends StatefulWidget {
   final Function(DroneConfig?)? onSelectDrone;
-  final dynamic webSocketService; // Добавляем сервис WebSocket
+  final dynamic webSocketService;
 
   const ConnectionSettingsDialog({
     super.key,

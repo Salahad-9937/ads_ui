@@ -1,9 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:convert';
-import 'dart:typed_data';
+// import 'dart:typed_data';
 import 'dart:async';
 import '../main_screen/menubar/connection_settings/drone_manager.dart';
-import '../main_screen/menubar/connection_settings/drone_config.dart';
+import '../domain/entities/drone_config.dart';
 
 /// Сервис для управления WebSocket-соединением с сервером дрона.
 ///
@@ -55,9 +56,11 @@ class WebSocketService {
   /// Обновляет текущий дрон для подключения
   void updateDrone(DroneConfig? drone) {
     _currentDrone = drone;
-    print(
-      'Updated drone: ${_currentDrone?.name} (${_currentDrone?.ipAddress}:${_currentDrone?.port})',
-    );
+    if (kDebugMode) {
+      print(
+        'Updated drone: ${_currentDrone?.name} (${_currentDrone?.ipAddress}:${_currentDrone?.port})',
+      );
+    }
     if (_isConnected) {
       disconnect();
       if (_explicitlyConnected) {
@@ -87,7 +90,9 @@ class WebSocketService {
             sshPassword: '',
           );
       final url = 'ws://${drone.ipAddress}:${drone.port}';
-      print('Connecting to: ws://${drone.ipAddress}:${drone.port}');
+      if (kDebugMode) {
+        print('Connecting to: ws://${drone.ipAddress}:${drone.port}');
+      }
       _channel = WebSocketChannel.connect(Uri.parse(url));
       onConnectionUpdate(true);
       _isConnected = true;
@@ -104,21 +109,29 @@ class WebSocketService {
               onImageUpdate(_currentImage);
             }
           } catch (e) {
-            print('Error parsing WebSocket data: $e');
+            if (kDebugMode) {
+              print('Error parsing WebSocket data: $e');
+            }
           }
         },
         onError: (error) {
-          print('WebSocket error: $error');
+          if (kDebugMode) {
+            print('WebSocket error: $error');
+          }
           _handleDisconnect();
         },
         onDone: () {
-          print('WebSocket closed');
+          if (kDebugMode) {
+            print('WebSocket closed');
+          }
           _handleDisconnect();
         },
         cancelOnError: true,
       );
     } catch (e) {
-      print('Connection error: $e');
+      if (kDebugMode) {
+        print('Connection error: $e');
+      }
       _handleDisconnect();
     } finally {
       _isReconnecting = false;
@@ -137,7 +150,9 @@ class WebSocketService {
     onConnectionUpdate(false);
     onStatusUpdate({});
     onImageUpdate(null);
-    print('Disconnected from WebSocket');
+    if (kDebugMode) {
+      print('Disconnected from WebSocket');
+    }
   }
 
   /// Включает или отключает автоматическое переподключение.
@@ -185,9 +200,11 @@ class WebSocketService {
   /// Обрабатывает смену активного дрона.
   void _onDroneSelected() {
     _currentDrone = droneManager.selectedDrone;
-    print(
-      'Drone selected: ${_currentDrone?.name} (${_currentDrone?.ipAddress}:${_currentDrone?.port})',
-    );
+    if (kDebugMode) {
+      print(
+        'Drone selected: ${_currentDrone?.name} (${_currentDrone?.ipAddress}:${_currentDrone?.port})',
+      );
+    }
     if (_isConnected) {
       disconnect();
       if (_explicitlyConnected) {

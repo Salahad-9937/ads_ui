@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'drone_config.dart';
+import '../../../domain/entities/drone_config.dart';
 
 /// Виджет для отображения списка дронов с возможностью выбора, редактирования и удаления.
 class DroneListWidget extends StatelessWidget {

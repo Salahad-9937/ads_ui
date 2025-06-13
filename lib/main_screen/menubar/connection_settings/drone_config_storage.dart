@@ -1,13 +1,10 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'drone_config.dart';
+import '../../../domain/entities/drone_config.dart';
+import '../../../../domain/repositories/drone_config_repository.dart'; // Новый импорт
 
 /// Хранилище для управления конфигурациями дронов.
-///
-/// [_key] - Ключ для хранения данных в SharedPreferences.
-/// [_selectedDroneKey] - Ключ для хранения индекса активного дрона.
-/// [_defaultDrone] - Конфигурация дрона по умолчанию.
-class DroneConfigStorage {
+class DroneConfigStorage implements DroneConfigRepository {
   static const String _key = 'droneConfigs';
   static const String _selectedDroneKey = 'selectedDroneIndex';
   static final DroneConfig _defaultDrone = DroneConfig(
@@ -19,16 +16,15 @@ class DroneConfigStorage {
     sshPassword: '',
   );
 
-  /// Загружает список конфигураций дронов из хранилища.
+  @override
   Future<List<DroneConfig>> loadDrones() async {
     final prefs = await SharedPreferences.getInstance();
     final droneList = prefs.getString(_key);
-    List<DroneConfig> drones = [_defaultDrone]; // Always include default drone
+    List<DroneConfig> drones = [_defaultDrone];
     if (droneList != null) {
       final List<dynamic> jsonList = json.decode(droneList);
       final loadedDrones =
           jsonList.map((json) => DroneConfig.fromJson(json)).toList();
-      // Add loaded drones, excluding any that match the default drone
       for (var drone in loadedDrones) {
         if (drone.name != _defaultDrone.name ||
             drone.ipAddress != _defaultDrone.ipAddress) {
@@ -36,16 +32,13 @@ class DroneConfigStorage {
         }
       }
     }
-    await saveDrones(drones); // Ensure default drone is saved
+    await saveDrones(drones);
     return drones;
   }
 
-  /// Сохраняет список конфигураций дронов в хранилище.
-  ///
-  /// [drones] - Список конфигураций дронов для сохранения.
+  @override
   Future<void> saveDrones(List<DroneConfig> drones) async {
     final prefs = await SharedPreferences.getInstance();
-    // Ensure default drone is included
     final filteredDrones =
         drones
             .where(
@@ -62,9 +55,7 @@ class DroneConfigStorage {
     await prefs.setString(_key, json.encode(jsonList));
   }
 
-  /// Сохраняет индекс активного дрона в хранилище.
-  ///
-  /// [index] - Индекс активного дрона или null, если дрон не выбран.
+  @override
   Future<void> saveSelectedDroneIndex(int? index) async {
     final prefs = await SharedPreferences.getInstance();
     if (index != null) {
@@ -74,7 +65,7 @@ class DroneConfigStorage {
     }
   }
 
-  /// Загружает индекс активного дрона из хранилища.
+  @override
   Future<int?> loadSelectedDroneIndex() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_selectedDroneKey);

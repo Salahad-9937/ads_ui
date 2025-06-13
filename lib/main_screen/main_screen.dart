@@ -7,7 +7,7 @@ import '../servises/websocket_service.dart';
 import 'panels/status_panel.dart';
 import 'panels/tasks_panel.dart';
 import 'menubar/connection_settings/drone_manager.dart';
-import 'menubar/connection_settings/drone_config.dart';
+import '../domain/entities/drone_config.dart';
 
 /// Главный экран приложения, отображающий интерфейс управления дроном.
 ///
