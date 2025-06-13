@@ -1,3 +1,4 @@
+// lib/main_screen/main_screen.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'menubar/menu_bar.dart';
@@ -7,9 +8,9 @@ import '../servises/websocket_service.dart';
 import 'panels/status_panel.dart';
 import 'panels/tasks_panel.dart';
 import 'menubar/connection_settings/drone_manager.dart';
-import 'menubar/connection_settings/drone_config_storage.dart'; // Новый импорт
+import 'menubar/connection_settings/drone_config_storage.dart';
 import '../domain/entities/drone_config.dart';
-// Новый импорт
+import '../domain/use_cases/manage_websocket_use_case.dart';
 
 /// Главный экран приложения, отображающий интерфейс управления дроном.
 class MainScreen extends StatefulWidget {
@@ -20,7 +21,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
-  late WebSocketService webSocketService;
+  late ManageWebSocketUseCase _webSocketUseCase;
   late DroneManager droneManager;
   Map<String, dynamic> droneStatus = {};
   Uint8List? currentImage;
@@ -32,46 +33,50 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    // Временное создание репозитория, в будущем использовать DI
+    // Временное создание репозитория и сервисов, в будущем использовать DI
     final repository = DroneConfigStorage();
     droneManager = DroneManager(repository: repository);
+    final webSocketService = WebSocketService(droneManager: droneManager);
+    _webSocketUseCase = ManageWebSocketUseCase(
+      webSocketService: webSocketService,
+    );
+
     droneManager.setOnDroneSelectedCallback(_onDroneSelected);
     droneManager.loadDrones().then((_) {
       setState(() {
         currentDrone = droneManager.selectedDrone;
-        webSocketService.updateDrone(currentDrone);
+        _webSocketUseCase.updateDrone(currentDrone);
       });
     });
-    webSocketService = WebSocketService(
-      droneManager: droneManager,
-      onStatusUpdate: (status) {
-        setState(() {
-          droneStatus = status;
-        });
-      },
-      onImageUpdate: (image) {
-        setState(() {
-          currentImage = image;
-        });
-      },
-      onConnectionUpdate: (connected) {
-        setState(() {
-          isConnected = connected;
-        });
-      },
-      onAutoReconnectUpdate: (enabled) {
-        setState(() {
-          isAutoReconnectEnabled = enabled;
-        });
-      },
-    );
+
+    // Подписка на потоки
+    _webSocketUseCase.droneStatusStream.listen((status) {
+      setState(() {
+        droneStatus = status;
+      });
+    });
+    _webSocketUseCase.imageStream.listen((image) {
+      setState(() {
+        currentImage = image;
+      });
+    });
+    _webSocketUseCase.connectionStream.listen((connected) {
+      setState(() {
+        isConnected = connected;
+      });
+    });
+    _webSocketUseCase.autoReconnectStream.listen((enabled) {
+      setState(() {
+        isAutoReconnectEnabled = enabled;
+      });
+    });
   }
 
   /// Обрабатывает смену активного дрона
   void _onDroneSelected() {
     setState(() {
       currentDrone = droneManager.selectedDrone;
-      webSocketService.updateDrone(currentDrone);
+      _webSocketUseCase.updateDrone(currentDrone);
       if (kDebugMode) {
         print(
           'MainScreen: Drone changed to ${currentDrone?.name} (${currentDrone?.ipAddress}:${currentDrone?.port})',
@@ -82,7 +87,7 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    webSocketService.dispose();
+    _webSocketUseCase.dispose();
     super.dispose();
   }
 
@@ -107,11 +112,12 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
         child: DroneMenuBar(
           isConnected: isConnected,
           isAutoReconnectEnabled: isAutoReconnectEnabled,
-          onConnect: webSocketService.connectToServer,
-          onDisconnect: webSocketService.disconnect,
-          onToggleReconnect: webSocketService.toggleAutoReconnect,
+          onConnect: _webSocketUseCase.connectToServer,
+          onDisconnect: _webSocketUseCase.disconnect,
+          onToggleReconnect: _webSocketUseCase.toggleAutoReconnect,
           droneManager: droneManager,
-          webSocketService: webSocketService,
+          webSocketService:
+              _webSocketUseCase, // Временная передача для совместимости
         ),
       ),
       body: Row(

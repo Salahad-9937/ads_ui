@@ -1,26 +1,12 @@
+// lib/servises/websocket_service.dart
 import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:convert';
-// import 'dart:typed_data';
 import 'dart:async';
 import '../main_screen/menubar/connection_settings/drone_manager.dart';
 import '../domain/entities/drone_config.dart';
 
 /// Сервис для управления WebSocket-соединением с сервером дрона.
-///
-/// [_channel] - Канал WebSocket для связи с сервером.
-/// [_droneStatus] - Текущий статус дрона.
-/// [_currentImage] - Текущее изображение с камеры дрона.
-/// [_isConnected] - Флаг, указывающий, активно ли соединение.
-/// [_isReconnecting] - Флаг, указывающий, выполняется ли переподключение.
-/// [_autoReconnect] - Флаг, указывающий, включено ли автоматическое переподключение.
-/// [_explicitlyConnected] - Флаг, указывающий, было ли соединение инициировано явно.
-/// [_reconnectTimer] - Таймер для автоматического переподключения.
-/// [droneManager] - Менеджер для получения конфигурации активного дрона.
-/// [onStatusUpdate] - Callback для обновления статуса дрона.
-/// [onImageUpdate] - Callback для обновления изображения.
-/// [onConnectionUpdate] - Callback для обновления состояния соединения.
-/// [onAutoReconnectUpdate] - Callback для обновления состояния автопереподключения.
 class WebSocketService {
   WebSocketChannel? _channel;
   Map<String, dynamic> _droneStatus = {};
@@ -31,22 +17,27 @@ class WebSocketService {
   bool _explicitlyConnected = false;
   Timer? _reconnectTimer;
   final DroneManager droneManager;
-  final Function(Map<String, dynamic>) onStatusUpdate;
-  final Function(Uint8List?) onImageUpdate;
-  final Function(bool) onConnectionUpdate;
-  final Function(bool) onAutoReconnectUpdate;
-  DroneConfig? _currentDrone; // Текущий дрон для подключения
+  DroneConfig? _currentDrone;
 
-  WebSocketService({
-    required this.droneManager,
-    required this.onStatusUpdate,
-    required this.onImageUpdate,
-    required this.onConnectionUpdate,
-    required this.onAutoReconnectUpdate,
-  }) {
+  final StreamController<Map<String, dynamic>> _droneStatusController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  final StreamController<Uint8List?> _imageController =
+      StreamController<Uint8List?>.broadcast();
+  final StreamController<bool> _connectionController =
+      StreamController<bool>.broadcast();
+  final StreamController<bool> _autoReconnectController =
+      StreamController<bool>.broadcast();
+
+  WebSocketService({required this.droneManager}) {
     _currentDrone = droneManager.selectedDrone;
     droneManager.setOnDroneSelectedCallback(_onDroneSelected);
   }
+
+  Stream<Map<String, dynamic>> get droneStatusStream =>
+      _droneStatusController.stream;
+  Stream<Uint8List?> get imageStream => _imageController.stream;
+  Stream<bool> get connectionStream => _connectionController.stream;
+  Stream<bool> get autoReconnectStream => _autoReconnectController.stream;
 
   bool get isConnected => _isConnected;
   Map<String, dynamic> get droneStatus => _droneStatus;
@@ -67,8 +58,8 @@ class WebSocketService {
         connectToServer();
       }
     }
-    onStatusUpdate({});
-    onImageUpdate(null);
+    _droneStatusController.add({});
+    _imageController.add(null);
   }
 
   /// Устанавливает соединение с сервером через WebSocket.
@@ -78,7 +69,6 @@ class WebSocketService {
     _explicitlyConnected = true;
 
     try {
-      // Получаем конфигурацию активного дрона или используем значения по умолчанию
       final drone =
           _currentDrone ??
           DroneConfig(
@@ -94,8 +84,8 @@ class WebSocketService {
         print('Connecting to: ws://${drone.ipAddress}:${drone.port}');
       }
       _channel = WebSocketChannel.connect(Uri.parse(url));
-      onConnectionUpdate(true);
       _isConnected = true;
+      _connectionController.add(true);
 
       _channel!.stream.listen(
         (data) {
@@ -103,10 +93,10 @@ class WebSocketService {
             final message = json.decode(data);
             if (message['type'] == 'status') {
               _droneStatus = message['data'];
-              onStatusUpdate(_droneStatus);
+              _droneStatusController.add(_droneStatus);
             } else if (message['type'] == 'image') {
               _currentImage = base64Decode(message['data']);
-              onImageUpdate(_currentImage);
+              _imageController.add(_currentImage);
             }
           } catch (e) {
             if (kDebugMode) {
@@ -147,9 +137,9 @@ class WebSocketService {
     _droneStatus = {};
     _currentImage = null;
     _explicitlyConnected = false;
-    onConnectionUpdate(false);
-    onStatusUpdate({});
-    onImageUpdate(null);
+    _connectionController.add(false);
+    _droneStatusController.add({});
+    _imageController.add(null);
     if (kDebugMode) {
       print('Disconnected from WebSocket');
     }
@@ -158,7 +148,7 @@ class WebSocketService {
   /// Включает или отключает автоматическое переподключение.
   void toggleAutoReconnect() {
     _autoReconnect = !_autoReconnect;
-    onAutoReconnectUpdate(_autoReconnect);
+    _autoReconnectController.add(_autoReconnect);
     if (!_autoReconnect) {
       _reconnectTimer?.cancel();
     } else if (!_isConnected && _explicitlyConnected) {
@@ -171,9 +161,9 @@ class WebSocketService {
     _isConnected = false;
     _droneStatus = {};
     _currentImage = null;
-    onConnectionUpdate(false);
-    onStatusUpdate({});
-    onImageUpdate(null);
+    _connectionController.add(false);
+    _droneStatusController.add({});
+    _imageController.add(null);
     _channel?.sink.close();
     _channel = null;
     if (_autoReconnect && _explicitlyConnected) {
@@ -211,8 +201,8 @@ class WebSocketService {
         connectToServer();
       }
     }
-    onStatusUpdate({});
-    onImageUpdate(null);
+    _droneStatusController.add({});
+    _imageController.add(null);
   }
 
   /// Освобождает ресурсы, закрывая соединение и отменяя таймер.
@@ -220,5 +210,9 @@ class WebSocketService {
     _reconnectTimer?.cancel();
     _channel?.sink.close();
     _channel = null;
+    _droneStatusController.close();
+    _imageController.close();
+    _connectionController.close();
+    _autoReconnectController.close();
   }
 }
