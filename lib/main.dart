@@ -1,8 +1,11 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
+import 'di.dart';
 import 'main_screen/main_screen.dart';
 
 void main() {
-  runApp(DroneControlApp());
+  setupDependencies(); // Инициализация DI
+  runApp(const DroneControlApp());
 }
 
 class DroneControlApp extends StatelessWidget {
@@ -17,7 +20,7 @@ class DroneControlApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         scaffoldBackgroundColor: Colors.grey[100],
       ),
-      home: MainScreen(),
+      home: const MainScreen(),
     );
   }
 }

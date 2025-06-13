@@ -1,12 +1,12 @@
 // lib/main_screen/menubar/connection_settings/connection_settings_dialog.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../../../di.dart';
 import '../../../domain/entities/drone_config.dart';
 import '../../../domain/use_cases/manage_drones_use_case.dart';
 import '../../../domain/use_cases/manage_websocket_use_case.dart';
 import 'drone_config_dialog.dart';
 import 'drone_list_widget.dart';
-import 'drone_config_storage.dart'; // Временный импорт для создания репозитория
 
 /// Диалоговое окно для управления списком конфигураций дронов.
 class ConnectionSettingsDialog extends StatefulWidget {
@@ -25,14 +25,11 @@ class ConnectionSettingsDialog extends StatefulWidget {
 }
 
 class ConnectionSettingsDialogState extends State<ConnectionSettingsDialog> {
-  late final ManageDronesUseCase _useCase;
+  final ManageDronesUseCase _useCase = getIt<ManageDronesUseCase>();
 
   @override
   void initState() {
     super.initState();
-    // Временное создание репозитория, в будущем использовать DI
-    final repository = DroneConfigStorage();
-    _useCase = ManageDronesUseCase(repository);
     _loadDrones();
   }
 
