@@ -241,8 +241,16 @@ find . -type f -name "*.dart" ! -name "test.*" | while read -r file; do
             # Нормализуем путь
             resolved_path=$(normalize_path "$full_path")
         else
-            # Абсолютный путь от корня lib/
-            resolved_path="$import_path"
+            # ИСПРАВЛЕНИЕ: Обрабатываем относительные пути без ./ и ../
+            # Если путь не начинается с package:, ./ или ../, то это относительный путь от текущей директории
+            current_dir=$(dirname "$clean_file")
+            
+            if [[ "$current_dir" == "." ]]; then
+                resolved_path="$import_path"
+            else
+                full_path="$current_dir/$import_path"
+                resolved_path=$(normalize_path "$full_path")
+            fi
         fi
         
         # Проверяем, существует ли целевой файл в нашем списке
